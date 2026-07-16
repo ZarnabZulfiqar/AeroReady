@@ -1,2 +1,2 @@
-# Project Documentation
-This folder contains the Software Requirements Specification (SRS) and other project documentation for AeroReady.
+## Mockups
+UI Mockups for AreoReady are available in the mockups "mockups.pptx" file.
