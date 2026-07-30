@@ -20,7 +20,7 @@ function ForgotPassword() {
     if (error) {
       setError(error.message);
     } else {
-      setMessage("Password reset link bhej diya gaya hai aapke email par.");
+      setMessage("A password reset link has been sent to your email.");
     }
   }
 
@@ -41,7 +41,7 @@ function ForgotPassword() {
           <span className="text-accentTeal">Password</span>
         </h1>
         <p className="text-textBody text-sm mb-6">
-          Apna email daalein, hum aapko reset link bhejenge.
+          Enter your email address and we'll send you a reset link.
         </p>
 
         <div className="text-left mb-4">
