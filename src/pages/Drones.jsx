@@ -214,9 +214,10 @@ function Drones() {
 
   return (
     <div className="w-full">
-      <div className="flex items-center justify-between mb-4">
+      {/* Header row: stacks on mobile, side-by-side on larger screens */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
         <h1 className="text-2xl font-bold">Drone Inventory</h1>
-        <div className="flex gap-2 items-center">
+        <div className="flex flex-wrap gap-2 items-center">
           {selectMode ? (
             <>
               <span className="text-textBody text-sm">{selected.length} selected</span>
@@ -261,7 +262,8 @@ function Drones() {
         className="w-full max-w-md mb-4 p-2 rounded bg-cardDark border border-gray-700 text-white outline-none focus:border-accentTeal"
       />
 
-      <div className="flex gap-2 mb-4">
+      {/* Filter pills: allowed to wrap on small screens instead of overflowing */}
+      <div className="flex flex-wrap gap-2 mb-4">
         {filters.map((f) => (
           <button
             key={f}
@@ -285,86 +287,89 @@ function Drones() {
             No {filter === "All" ? "" : filter} Drones{filter === "All" ? " Found" : ""}
           </p>
         ) : (
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="text-textBody text-left">
-                {selectMode && (
-                  <th className="pb-2 w-8">
-                    <input
-                      type="checkbox"
-                      checked={selected.length === filteredDrones.length && filteredDrones.length > 0}
-                      onChange={toggleSelectAll}
-                      className="accent-accentTeal"
-                    />
-                  </th>
-                )}
-                <th className="pb-2">ID</th>
-                <th className="pb-2">Model</th>
-                <th className="pb-2">Type</th>
-                <th className="pb-2">Payload</th>
-                <th className="pb-2">Status</th>
-                <th className="pb-2 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredDrones.map((d) => (
-                <tr
-                  key={d.id}
-                  className={`border-t border-gray-700 select-none ${selected.includes(d.id) ? "bg-accentTeal/10" : ""} ${!d.active ? "opacity-50" : ""} ${selectMode ? "cursor-pointer" : ""}`}
-                  onClick={() => handleRowClick(d)}
-                  onContextMenu={(e) => handleContextMenu(e, d.id)}
-                  onTouchStart={() => handleTouchStart(d.id)}
-                  onTouchEnd={handleTouchEnd}
-                  onTouchMove={handleTouchEnd}
-                >
+          // Horizontal scroll wrapper so only the table scrolls on mobile, not the whole page
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm min-w-[700px]">
+              <thead>
+                <tr className="text-textBody text-left">
                   {selectMode && (
-                    <td className="py-3" onClick={(e) => e.stopPropagation()}>
+                    <th className="pb-2 w-8">
                       <input
                         type="checkbox"
-                        checked={selected.includes(d.id)}
-                        onChange={() => toggleSelect(d.id)}
+                        checked={selected.length === filteredDrones.length && filteredDrones.length > 0}
+                        onChange={toggleSelectAll}
                         className="accent-accentTeal"
                       />
-                    </td>
+                    </th>
                   )}
-                  <td className="py-3 font-semibold">{d.id}</td>
-                  <td className="py-3 text-textBody">{d.model}</td>
-                  <td className="py-3 text-textBody">{d.type}</td>
-                  <td className="py-3 text-textBody">{d.payload}</td>
-                  <td className="py-3">
-                    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${statusColor(d.status)}`}>
-                      {d.status}
-                    </span>
-                    {!d.active && (
-                      <span className="ml-2 px-2 py-1 rounded-full text-xs font-semibold bg-gray-500/20 text-gray-400">
-                        Disabled
-                      </span>
-                    )}
-                  </td>
-                  <td className="py-3 text-right" onClick={(e) => e.stopPropagation()}>
-                    {!selectMode && (
-                      <>
-                        <button onClick={() => handleEdit(d)} className="text-accentTeal mr-3">
-                          <Pencil size={16} />
-                        </button>
-                        <button onClick={() => confirmDisableOne(d.id)} className="text-orange-400">
-                          {d.active ? <Ban size={16} /> : <RotateCcw size={16} />}
-                        </button>
-                      </>
-                    )}
-                  </td>
+                  <th className="pb-2">ID</th>
+                  <th className="pb-2">Model</th>
+                  <th className="pb-2">Type</th>
+                  <th className="pb-2">Payload</th>
+                  <th className="pb-2">Status</th>
+                  <th className="pb-2 text-right">Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {filteredDrones.map((d) => (
+                  <tr
+                    key={d.id}
+                    className={`border-t border-gray-700 select-none ${selected.includes(d.id) ? "bg-accentTeal/10" : ""} ${!d.active ? "opacity-50" : ""} ${selectMode ? "cursor-pointer" : ""}`}
+                    onClick={() => handleRowClick(d)}
+                    onContextMenu={(e) => handleContextMenu(e, d.id)}
+                    onTouchStart={() => handleTouchStart(d.id)}
+                    onTouchEnd={handleTouchEnd}
+                    onTouchMove={handleTouchEnd}
+                  >
+                    {selectMode && (
+                      <td className="py-3" onClick={(e) => e.stopPropagation()}>
+                        <input
+                          type="checkbox"
+                          checked={selected.includes(d.id)}
+                          onChange={() => toggleSelect(d.id)}
+                          className="accent-accentTeal"
+                        />
+                      </td>
+                    )}
+                    <td className="py-3 font-semibold">{d.id}</td>
+                    <td className="py-3 text-textBody">{d.model}</td>
+                    <td className="py-3 text-textBody">{d.type}</td>
+                    <td className="py-3 text-textBody">{d.payload}</td>
+                    <td className="py-3">
+                      <span className={`px-3 py-1 rounded-full text-xs font-semibold ${statusColor(d.status)}`}>
+                        {d.status}
+                      </span>
+                      {!d.active && (
+                        <span className="ml-2 px-2 py-1 rounded-full text-xs font-semibold bg-gray-500/20 text-gray-400">
+                          Disabled
+                        </span>
+                      )}
+                    </td>
+                    <td className="py-3 text-right" onClick={(e) => e.stopPropagation()}>
+                      {!selectMode && (
+                        <>
+                          <button onClick={() => handleEdit(d)} className="text-accentTeal mr-3">
+                            <Pencil size={16} />
+                          </button>
+                          <button onClick={() => confirmDisableOne(d.id)} className="text-orange-400">
+                            {d.active ? <Ban size={16} /> : <RotateCcw size={16} />}
+                          </button>
+                        </>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
 
       {showForm && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
           <form
             onSubmit={handleSaveDrone}
-            className="bg-cardDark p-6 rounded-xl w-full max-w-2xl flex flex-col gap-4 relative"
+            className="bg-cardDark p-6 rounded-xl w-full max-w-2xl flex flex-col gap-4 relative max-h-[90vh] overflow-y-auto"
           >
             <button
               type="button"
@@ -378,7 +383,8 @@ function Drones() {
               {editingId ? "Edit Drone" : "Add New Drone"}
             </h2>
 
-            <div className="grid grid-cols-2 gap-4">
+            {/* Form fields: 1 column on mobile, 2 columns from small screens up */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="text-textBody text-sm">Drone ID</label>
                 <input
@@ -443,7 +449,7 @@ function Drones() {
 
             {fieldErrors.form && <p className="text-red-400 text-sm">{fieldErrors.form}</p>}
 
-            <div className="flex justify-end gap-2 mt-3">
+            <div className="flex flex-col sm:flex-row justify-end gap-2 mt-3">
               <button
                 type="button"
                 onClick={() => setShowForm(false)}
@@ -460,7 +466,7 @@ function Drones() {
       )}
 
       {confirmDisable && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
           <div className="bg-cardDark p-6 rounded-xl w-full max-w-sm text-center">
             <h2 className="text-lg font-bold mb-2">
               {confirmDisable.type === "single"
@@ -471,7 +477,7 @@ function Drones() {
               Disabling keeps the drone's fault and maintenance history intact,
               but prevents it from being assigned to new missions.
             </p>
-            <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row gap-2">
               <button
                 onClick={() => setConfirmDisable(null)}
                 className="flex-1 py-2 rounded border border-gray-600 text-textBody hover:border-accentTeal"

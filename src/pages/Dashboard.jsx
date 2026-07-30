@@ -112,7 +112,8 @@ function Dashboard() {
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-5 gap-4 mb-6">
+          {/* Stat cards: 1 column on mobile, 2 on small tablets, 5 on desktop */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
             <div className="bg-cardDark p-4 rounded">
               <p className="text-textBody text-sm">Active Drones</p>
               <p className="text-2xl font-bold text-accentTeal">{stats.activeDrones}</p>
@@ -142,69 +143,75 @@ function Dashboard() {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          {/* Tables: stacked on mobile, side-by-side on large screens */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <div className="bg-cardDark p-4 rounded">
               <h2 className="font-bold mb-3">Upcoming Missions</h2>
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="text-textBody text-left">
-                    <th className="pb-2">Mission</th>
-                    <th className="pb-2">Date</th>
-                    <th className="pb-2">Drone</th>
-                    <th className="pb-2">Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {missions.length === 0 ? (
-                    <tr>
-                      <td colSpan="4" className="py-4 text-center text-textBody">No missions found</td>
+              {/* Horizontal scroll wrapper so only the table scrolls, not the whole page */}
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm min-w-[500px]">
+                  <thead>
+                    <tr className="text-textBody text-left">
+                      <th className="pb-2">Mission</th>
+                      <th className="pb-2">Date</th>
+                      <th className="pb-2">Drone</th>
+                      <th className="pb-2">Status</th>
                     </tr>
-                  ) : (
-                    missions.map((m) => (
-                      <tr key={m.id} className="border-t border-gray-700">
-                        <td className="py-2">{m.name}</td>
-                        <td className="py-2 text-textBody">{m.scheduled_date}</td>
-                        <td className="py-2 text-textBody">
-                          {m.drones ? `${m.drone_id} (${m.drones.model})` : m.drone_id || "—"}
-                        </td>
-                        <td className={`py-2 font-semibold ${statusColor(m.status)}`}>{m.status}</td>
+                  </thead>
+                  <tbody>
+                    {missions.length === 0 ? (
+                      <tr>
+                        <td colSpan="4" className="py-4 text-center text-textBody">No missions found</td>
                       </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
+                    ) : (
+                      missions.map((m) => (
+                        <tr key={m.id} className="border-t border-gray-700">
+                          <td className="py-2">{m.name}</td>
+                          <td className="py-2 text-textBody">{m.scheduled_date}</td>
+                          <td className="py-2 text-textBody">
+                            {m.drones ? `${m.drone_id} (${m.drones.model})` : m.drone_id || "—"}
+                          </td>
+                          <td className={`py-2 font-semibold ${statusColor(m.status)}`}>{m.status}</td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
 
             <div className="bg-cardDark p-4 rounded">
               <h2 className="font-bold mb-3">Recent Approvals</h2>
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="text-textBody text-left">
-                    <th className="pb-2">Request</th>
-                    <th className="pb-2">Submitted</th>
-                    <th className="pb-2">Approver</th>
-                    <th className="pb-2">Decision</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {approvals.length === 0 ? (
-                    <tr>
-                      <td colSpan="4" className="py-4 text-center text-textBody">No approvals found</td>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm min-w-[500px]">
+                  <thead>
+                    <tr className="text-textBody text-left">
+                      <th className="pb-2">Request</th>
+                      <th className="pb-2">Submitted</th>
+                      <th className="pb-2">Approver</th>
+                      <th className="pb-2">Decision</th>
                     </tr>
-                  ) : (
-                    approvals.map((a) => (
-                      <tr key={a.id} className="border-t border-gray-700">
-                        <td className="py-2">{a.name}</td>
-                        <td className="py-2 text-textBody">
-                          {a.decided_at ? new Date(a.decided_at).toLocaleDateString() : "—"}
-                        </td>
-                        <td className="py-2 text-textBody">{a.decided_by || "—"}</td>
-                        <td className={`py-2 font-semibold ${statusColor(a.decision)}`}>{a.decision}</td>
+                  </thead>
+                  <tbody>
+                    {approvals.length === 0 ? (
+                      <tr>
+                        <td colSpan="4" className="py-4 text-center text-textBody">No approvals found</td>
                       </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
+                    ) : (
+                      approvals.map((a) => (
+                        <tr key={a.id} className="border-t border-gray-700">
+                          <td className="py-2">{a.name}</td>
+                          <td className="py-2 text-textBody">
+                            {a.decided_at ? new Date(a.decided_at).toLocaleDateString() : "—"}
+                          </td>
+                          <td className="py-2 text-textBody">{a.decided_by || "—"}</td>
+                          <td className={`py-2 font-semibold ${statusColor(a.decision)}`}>{a.decision}</td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         </>

@@ -228,9 +228,10 @@ function ChecklistTemplates() {
 
   return (
     <div className="w-full">
-      <div className="flex items-center justify-between mb-4">
+      {/* Header row: stacks on mobile, side-by-side on larger screens */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
         <h1 className="text-2xl font-bold">Checklist Templates</h1>
-        <div className="flex gap-2 items-center">
+        <div className="flex flex-wrap gap-2 items-center">
           {selectMode ? (
             <>
               <span className="text-textBody text-sm">{selected.length} selected</span>
@@ -299,7 +300,7 @@ function ChecklistTemplates() {
             No {filter === "All" ? "" : filter} Items{filter === "All" ? " Found" : ""}
           </p>
         ) : (
-          <table className="w-full text-sm">
+          <table className="w-full text-sm min-w-[800px]">
             <thead>
               <tr className="text-textBody text-left">
                 {selectMode && (
@@ -378,7 +379,7 @@ function ChecklistTemplates() {
       </div>
 
       {showForm && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
           <form
             onSubmit={handleSaveItem}
             className="bg-cardDark p-6 rounded-xl w-full max-w-2xl flex flex-col gap-4 relative max-h-[90vh] overflow-y-auto"
@@ -395,7 +396,8 @@ function ChecklistTemplates() {
               {editingId ? "Edit Checklist Item" : "Add New Checklist Item"}
             </h2>
 
-            <div className="grid grid-cols-2 gap-4">
+            {/* Form fields: 1 column on mobile, 2 columns from small screens up */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="text-textBody text-sm">Item ID</label>
                 <input
@@ -446,7 +448,7 @@ function ChecklistTemplates() {
               </div>
 
               {newItem.criticality === "Conditional" && (
-                <div className="col-span-2">
+                <div className="col-span-1 sm:col-span-2">
                   <label className="text-textBody text-sm">Condition (applies when...)</label>
                   <input
                     placeholder="e.g. Applies when payload/camera is assigned"
@@ -485,7 +487,7 @@ function ChecklistTemplates() {
 
             {fieldErrors.form && <p className="text-red-400 text-sm">{fieldErrors.form}</p>}
 
-            <div className="flex justify-end gap-2 mt-3">
+            <div className="flex flex-col sm:flex-row justify-end gap-2 mt-3">
               <button
                 type="button"
                 onClick={() => setShowForm(false)}
@@ -502,7 +504,7 @@ function ChecklistTemplates() {
       )}
 
       {confirmRetire && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
           <div className="bg-cardDark p-6 rounded-xl w-full max-w-sm text-center">
             <h2 className="text-lg font-bold mb-2">
               {confirmRetire.type === "single"
@@ -513,7 +515,7 @@ function ChecklistTemplates() {
               Retiring keeps the item's history intact for any checklist that already
               referenced it, but stops it from being used in new checklists.
             </p>
-            <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row gap-2">
               <button
                 onClick={() => setConfirmRetire(null)}
                 className="flex-1 py-2 rounded border border-gray-600 text-textBody hover:border-accentTeal"
