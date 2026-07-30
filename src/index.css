@@ -2,6 +2,17 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+  html, body {
+    background-color: #0A0E17;
+    min-height: 100%;
+  }
+
+  #root {
+    min-height: 100vh;
+  }
+}
+
 @layer components {
   /* Primary Button Styling */
   .btn-primary {
@@ -29,5 +40,10 @@
   .no-scrollbar {
     -ms-overflow-style: none; /* IE and Edge */
     scrollbar-width: none;  /* Firefox */
+  }
+
+  /* Prevent double min-h-screen inside pages from creating extra blank scroll space */
+  main .min-h-screen {
+    min-height: 0 !important;
   }
 }
