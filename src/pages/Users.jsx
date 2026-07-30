@@ -17,6 +17,7 @@ function Users() {
   const emptyUser = { name: "", email: "", role: "Operator", status: "Active" };
   const [newUser, setNewUser] = useState(emptyUser);
 
+  // Include is_locked when mapping a row from the database
   function mapFromDb(row) {
     return {
       id: row.id,
@@ -24,6 +25,7 @@ function Users() {
       email: row.email,
       role: row.role,
       status: row.status,
+      isLocked: row.is_locked,
     };
   }
 
@@ -147,6 +149,18 @@ function Users() {
     setShowForm(true);
   }
 
+  // Calls the admin_unlock_account RPC function.
+  // Only succeeds if the currently logged-in user is an Administrator
+  // (enforced server-side inside the Postgres function).
+  async function handleUnlock(userId) {
+    const { error } = await supabase.rpc("admin_unlock_account", { p_user_id: userId });
+    if (error) {
+      setError("Failed to unlock account. " + error.message);
+    } else {
+      fetchUsers();
+    }
+  }
+
   return (
     <div className="w-full">
       <h1 className="text-2xl font-bold mb-4">Users & Roles</h1>
@@ -225,11 +239,25 @@ function Users() {
                     <span className={`px-3 py-1 rounded-full text-xs font-semibold ${statusColor(u.status)}`}>
                       {u.status}
                     </span>
+                    {/* Show a red "Locked" badge if the account was locked
+                        by the failed-login-attempt system */}
+                    {u.isLocked && (
+                      <span className="ml-2 px-2 py-1 rounded-full text-xs font-semibold bg-red-500/20 text-red-400">
+                        Locked
+                      </span>
+                    )}
                   </td>
                   <td className="py-3 text-right">
-                    <button onClick={() => handleEdit(u)} className="text-accentTeal font-semibold">
+                    <button onClick={() => handleEdit(u)} className="text-accentTeal font-semibold mr-3">
                       Edit
                     </button>
+                    {/* Unlock button only shows for locked accounts.
+                        Only an Administrator can successfully call this. */}
+                    {u.isLocked && (
+                      <button onClick={() => handleUnlock(u.id)} className="text-orange-400 font-semibold">
+                        Unlock
+                      </button>
+                    )}
                   </td>
                 </tr>
               ))}
