@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
+import { Menu } from "lucide-react";
 import Sidebar from "./components/Sidebar";
 import { supabase } from "./supabaseClient";
 
@@ -19,9 +20,8 @@ import Traceability from "./pages/Traceability";
 import Users from "./pages/Users";
 import Settings from "./pages/Settings";
 
-// FR-001 / FR-002: gate every screen behind authentication, and optionally behind role
 function ProtectedRoute({ children, allowedRoles }) {
-  const [status, setStatus] = useState("checking"); // checking | allowed | denied | unauthenticated
+  const [status, setStatus] = useState("checking");
 
   useEffect(() => {
     let active = true;
@@ -47,7 +47,6 @@ function ProtectedRoute({ children, allowedRoles }) {
         .eq("id", session.user.id)
         .single();
 
-      // FR-005 / BR-001: deactivated accounts lose access immediately, even mid-session
       if (error || !profile || profile.status === "Deactivated") {
         await supabase.auth.signOut();
         if (active) setStatus("unauthenticated");
@@ -89,17 +88,30 @@ function ProtectedRoute({ children, allowedRoles }) {
 
 function AppLayout({ children }) {
   const navigate = useNavigate();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   async function handleLogout() {
-    await supabase.auth.signOut(); // SEC-AUTH-02: invalidate session on logout
+    await supabase.auth.signOut();
     navigate("/", { replace: true });
   }
 
   return (
     <div className="min-h-screen bg-[#0A0E17] text-white flex">
-      <Sidebar onLogout={handleLogout} />
-      <main className="pl-64 flex-1 min-h-screen flex flex-col bg-[#0A0E17]">
-        <header className="h-14 w-full px-8 flex justify-end items-center gap-3 bg-[#0A0E17] border-b border-gray-800/80 shrink-0">
+      <Sidebar
+        onLogout={handleLogout}
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+      />
+      <main className="flex-1 min-h-screen flex flex-col bg-[#0A0E17] md:pl-64">
+        <header className="h-14 w-full px-4 md:px-8 flex justify-between md:justify-end items-center gap-3 bg-[#0A0E17] border-b border-gray-800/80 shrink-0">
+          <button
+            type="button"
+            onClick={() => setSidebarOpen(true)}
+            className="md:hidden text-slate-300 hover:text-white"
+          >
+            <Menu size={22} />
+          </button>
+
           <button
             onClick={handleLogout}
             className="w-8 h-8 rounded-full bg-[#14b8a6] flex items-center justify-center text-[#0A0E17] font-bold text-xs shadow-md cursor-pointer"
@@ -108,7 +120,7 @@ function AppLayout({ children }) {
             ZA
           </button>
         </header>
-        <div className="flex-1 w-full px-8 pt-6 pb-8 overflow-y-auto">
+        <div className="flex-1 w-full px-4 md:px-8 pt-6 pb-8 overflow-y-auto">
           {children}
         </div>
       </main>
@@ -120,12 +132,10 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Public routes — bina sidebar/header ke */}
         <Route path="/" element={<Login />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
 
-        {/* Protected routes — auth required */}
         <Route path="/dashboard" element={<ProtectedRoute><AppLayout><Dashboard /></AppLayout></ProtectedRoute>} />
         <Route path="/drones" element={<ProtectedRoute><AppLayout><Drones /></AppLayout></ProtectedRoute>} />
         <Route path="/batteries" element={<ProtectedRoute><AppLayout><Batteries /></AppLayout></ProtectedRoute>} />
@@ -137,7 +147,6 @@ function App() {
         <Route path="/reports" element={<ProtectedRoute><AppLayout><Reports /></AppLayout></ProtectedRoute>} />
         <Route path="/traceability" element={<ProtectedRoute><AppLayout><Traceability /></AppLayout></ProtectedRoute>} />
 
-        {/* Admin-only: FR-003/004/005, SEC-AUTHZ-03 */}
         <Route
           path="/users"
           element={
