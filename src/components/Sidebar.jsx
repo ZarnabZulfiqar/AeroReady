@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
+import { supabase } from "../supabaseClient"; // apna actual path yahan set karein
 import {
   LayoutDashboard,
   Plane,
@@ -16,26 +17,30 @@ import {
   X,
 } from "lucide-react";
 
+// roles: undefined = sab dekh sakte hain, array diya toh sirf unhi roles ko dikhega
 const navItems = [
-  { key: "dashboard", label: "Dashboard", icon: LayoutDashboard, path: "/dashboard" },
-  { key: "drones", label: "Drones", icon: Plane, path: "/drones" },
-  { key: "batteries", label: "Batteries", icon: BatteryFull, path: "/batteries" },
-  { key: "missions", label: "Missions", icon: MapPin, path: "/missions" },
-  { key: "checklist-templates", label: "Checklist Templates", icon: ClipboardCheck, path: "/checklist-templates" },
+  { key: "dashboard", label: "Dashboard", icon: LayoutDashboard, path: "/dashboard" }, // UC-03: All Actors
+  { key: "drones", label: "Drones", icon: Plane, path: "/drones", roles: ["Administrator"] }, // UC-04
+  { key: "batteries", label: "Batteries", icon: BatteryFull, path: "/batteries", roles: ["Administrator", "Technician"] }, // UC-05
+  { key: "missions", label: "Missions", icon: MapPin, path: "/missions", roles: ["Administrator", "Operator"] }, // UC-07/08/16, UC-10/11
+  { key: "checklist-templates", label: "Checklist Templates", icon: ClipboardCheck, path: "/checklist-templates", roles: ["Administrator"] }, // UC-06
 ];
 
 const bottomNavItems = [
-  { key: "risk-approval", label: "Risk & Approval", icon: ShieldAlert, path: "/risk-approval" },
-  { key: "maintenance", label: "Maintenance", icon: Wrench, path: "/maintenance" },
-  { key: "reports", label: "Reports", icon: FileText, path: "/reports" },
-  { key: "traceability", label: "Traceability", icon: GitBranch, path: "/traceability" },
-  { key: "users", label: "Users", icon: Users, path: "/users" },
-  { key: "settings", label: "Settings", icon: SettingsIcon, path: "/settings" },
+  { key: "risk-approval", label: "Risk & Approval", icon: ShieldAlert, path: "/risk-approval", roles: ["Administrator", "Operator"] }, // UC-10, UC-11
+  { key: "maintenance", label: "Maintenance", icon: Wrench, path: "/maintenance", roles: ["Administrator", "Operator", "Technician"] }, // UC-12, UC-13
+  { key: "reports", label: "Reports", icon: FileText, path: "/reports", roles: ["Administrator", "Operator", "Viewer"] }, // UC-14
+  { key: "traceability", label: "Traceability", icon: GitBranch, path: "/traceability", roles: ["Administrator", "Viewer"] }, // UC-15
+  { key: "users", label: "Users", icon: Users, path: "/users", roles: ["Administrator"] }, // UC-02
+  { key: "settings", label: "Settings", icon: SettingsIcon, path: "/settings" }, // SRS mein koi UC nahi — confirm karein
 ];
 
 function Sidebar({ onLogout, isOpen = false, onClose = () => {} }) {
   const location = useLocation();
   const currentPath = location.pathname;
+
+  const [role, setRole] = useState(null);
+  const [roleLoading, setRoleLoading] = useState(true);
 
   const isChecklistRelated =
     currentPath === "/checklist-templates" || currentPath.startsWith("/checklists/");
@@ -44,6 +49,69 @@ function Sidebar({ onLogout, isOpen = false, onClose = () => {} }) {
     onClose();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPath]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function fetchRole() {
+      try {
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+
+        if (!session?.user) {
+          if (isMounted) {
+            setRole(null);
+            setRoleLoading(false);
+          }
+          return;
+        }
+
+        const { data, error } = await supabase
+          .from("users")
+          .select("role")
+          .eq("user_id", session.user.id)
+          .single();
+
+        if (error) {
+          console.error("Sidebar: failed to fetch user role", error);
+        }
+
+        if (isMounted) {
+          setRole(data?.role ?? null);
+          setRoleLoading(false);
+        }
+      } catch (err) {
+        console.error("Sidebar: unexpected error fetching role", err);
+        if (isMounted) {
+          setRole(null);
+          setRoleLoading(false);
+        }
+      }
+    }
+
+    fetchRole();
+
+    const { data: authListener } = supabase.auth.onAuthStateChange(() => {
+      fetchRole();
+    });
+
+    return () => {
+      isMounted = false;
+      authListener?.subscription?.unsubscribe();
+    };
+  }, []);
+
+  // roles undefined = everyone; jab tak role load ho raha hai, restricted items hide (fail-closed)
+  const filterByRole = (items) =>
+    items.filter((item) => {
+      if (!item.roles) return true;
+      if (roleLoading) return false;
+      return item.roles.includes(role);
+    });
+
+  const visibleNavItems = filterByRole(navItems);
+  const visibleBottomNavItems = filterByRole(bottomNavItems);
 
   return (
     <>
@@ -82,7 +150,7 @@ function Sidebar({ onLogout, isOpen = false, onClose = () => {} }) {
         </div>
 
         <nav className="flex-1 py-2 px-3 space-y-1 overflow-y-auto no-scrollbar">
-          {navItems.map((item) => {
+          {visibleNavItems.map((item) => {
             const Icon = item.icon;
             const isActive =
               item.key === "checklist-templates"
@@ -104,7 +172,7 @@ function Sidebar({ onLogout, isOpen = false, onClose = () => {} }) {
             );
           })}
 
-          {bottomNavItems.map((item) => {
+          {visibleBottomNavItems.map((item) => {
             const Icon = item.icon;
             const isActive = currentPath === item.path;
             return (
