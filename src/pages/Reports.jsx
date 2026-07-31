@@ -1,6 +1,17 @@
 import { useState, useEffect } from "react";
-import { Search } from "lucide-react";
+import { Search, Download } from "lucide-react";
 import { supabase } from "../supabaseClient";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
+
+// Columns jo report mein nahi dikhani (internal/technical fields)
+const HIDDEN_FIELDS = ["id", "created_at", "updated_at", "user_id"];
+
+function prettyLabel(key) {
+  return key
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+}
 
 function Reports() {
   const [reportType, setReportType] = useState("Mission Readiness Report");
@@ -8,7 +19,7 @@ function Reports() {
   const [mission, setMission] = useState("");
   const [exportFormat, setExportFormat] = useState("");
   const [search, setSearch] = useState("");
-  const [filter, setFilter] = useState("All"); // "All" | "Active" | "Archived"
+  const [filter, setFilter] = useState("All");
   const [fieldErrors, setFieldErrors] = useState({});
   const [generating, setGenerating] = useState(false);
 
@@ -25,6 +36,8 @@ function Reports() {
       date: row.date,
       by: row.by,
       status: row.status,
+      mission_id: row.mission_id,
+      report_type: row.report_type,
     };
   }
 
@@ -67,14 +80,106 @@ function Reports() {
     .filter((r) => (filter === "All" ? true : r.status === filter))
     .filter((r) => r.name.toLowerCase().includes(search.toLowerCase()));
 
-  // UC-14 Alternate Flow: agar filter criteria se koi data match na ho,
-  // system empty report generate nahi karega, user ko inform karega
+  // Mission ka poora row fetch karke generic key/value rows banata hai —
+  // isse chahe missions table mein jo bhi columns hon, sab report mein aayenge
+  async function getMissionRows(missionId) {
+    const { data, error } = await supabase
+      .from("missions")
+      .select("*")
+      .eq("id", missionId)
+      .single();
+
+    if (error || !data) return [["Mission", "Data not found"]];
+
+    return Object.entries(data)
+      .filter(([key]) => !HIDDEN_FIELDS.includes(key))
+      .map(([key, value]) => [prettyLabel(key), value === null || value === "" ? "-" : String(value)]);
+  }
+
+  function buildCsvBlob(rows) {
+    const csvContent =
+      "Field,Value\n" + rows.map(([k, v]) => `"${k}","${String(v).replace(/"/g, '""')}"`).join("\n");
+    return new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+  }
+
+  function buildPdfBlob(title, rows) {
+    const doc = new jsPDF();
+    doc.setFontSize(16);
+    doc.text(title, 14, 18);
+    doc.setFontSize(10);
+    doc.text(`Generated: ${new Date().toLocaleString()}`, 14, 25);
+    autoTable(doc, {
+      startY: 32,
+      head: [["Field", "Value"]],
+      body: rows,
+      styles: { fontSize: 10 },
+      headStyles: { fillColor: [20, 184, 166] },
+    });
+    return doc.output("blob");
+  }
+
+  function openPrintableView(title, rows) {
+    const win = window.open("", "_blank");
+    if (!win) {
+      alert("Popup blocked. Please allow popups to use Printable view.");
+      return;
+    }
+    const rowsHtml = rows
+      .map(
+        ([k, v]) =>
+          `<tr><td style="padding:8px;border:1px solid #ccc;font-weight:600;">${k}</td><td style="padding:8px;border:1px solid #ccc;">${v}</td></tr>`
+      )
+      .join("");
+    win.document.write(`
+      <html>
+        <head>
+          <title>${title}</title>
+          <style>
+            body { font-family: sans-serif; padding: 24px; }
+            h1 { font-size: 20px; }
+            table { border-collapse: collapse; width: 100%; margin-top: 16px; }
+          </style>
+        </head>
+        <body>
+          <h1>${title}</h1>
+          <p>Generated: ${new Date().toLocaleString()}</p>
+          <table>${rowsHtml}</table>
+          <script>window.onload = () => window.print();</script>
+        </body>
+      </html>
+    `);
+    win.document.close();
+  }
+
+  function downloadBlob(blob, filename) {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  // Format ke hisaab se sahi output produce karta hai
+  async function produceAndDeliver(missionId, format, title) {
+    const rows = await getMissionRows(missionId);
+
+    if (format === "CSV") {
+      downloadBlob(buildCsvBlob(rows), `${title}.csv`);
+    } else if (format === "Printable view") {
+      openPrintableView(title, rows);
+    } else {
+      // default: PDF
+      downloadBlob(buildPdfBlob(title, rows), `${title}.pdf`);
+    }
+  }
+
   async function handleGenerate(e) {
     e.preventDefault();
     setFieldErrors({});
 
-    // Section 8.4 / UC-14: mission-specific reports require a selected mission,
-    // regardless of report type
     if (!mission) {
       setFieldErrors({ mission: "Please select a mission to generate this report against." });
       return;
@@ -87,11 +192,10 @@ function Reports() {
     setGenerating(true);
 
     const selectedMission = missionOptions.find((m) => m.id === mission);
+    const reportName = `${reportType} — ${selectedMission ? selectedMission.name : mission}`;
 
-    // FR-038/039/040: generate the report record and persist it as part of
-    // the mission's historical record (BR-014: immutable once issued)
     const { error } = await supabase.from("reports").insert({
-      name: `${reportType} — ${selectedMission ? selectedMission.name : mission}`,
+      name: reportName,
       format: exportFormat,
       date: new Date().toISOString().split("T")[0],
       by: "Current User",
@@ -106,6 +210,13 @@ function Reports() {
       return;
     }
 
+    try {
+      await produceAndDeliver(mission, exportFormat, reportName);
+    } catch (err) {
+      console.error("Report file generation failed", err);
+      setFieldErrors({ form: "Report saved, but file generation failed. Try downloading it again below." });
+    }
+
     setGenerating(false);
     setMission("");
     setExportFormat("");
@@ -113,8 +224,14 @@ function Reports() {
     fetchReports();
   }
 
-  // Report delete nahi hoti (SRS BR-014 ke mutabiq permanent historical record hai),
-  // sirf Active/Archived visibility flag hai — content change nahi hota
+  async function handleDownload(r) {
+    try {
+      await produceAndDeliver(r.mission_id, r.format, r.name);
+    } catch (err) {
+      setError("Failed to download report. " + err.message);
+    }
+  }
+
   async function toggleArchive(id) {
     const current = generatedReports.find((r) => r.id === id);
     const newStatus = current.status === "Active" ? "Archived" : "Active";
@@ -207,7 +324,6 @@ function Reports() {
         </div>
       </form>
 
-      {/* Header row: title + search stack on mobile, side-by-side on larger screens */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-3 gap-3">
         <h2 className="text-lg font-bold">Generated Reports</h2>
         <div className="relative w-full sm:w-auto">
@@ -244,8 +360,6 @@ function Reports() {
 
       {error && <p className="text-red-400 text-sm mb-3">{error}</p>}
 
-      {/* No forced min-width, so a scrollbar only appears when content
-          genuinely doesn't fit — stays invisible on desktop otherwise */}
       <div className="bg-cardDark p-4 rounded overflow-x-auto">
         {loading ? (
           <p className="text-textBody text-center py-8">Loading reports...</p>
@@ -279,7 +393,13 @@ function Reports() {
                       {r.status}
                     </span>
                   </td>
-                  <td className="py-3 text-right">
+                  <td className="py-3 text-right space-x-3 whitespace-nowrap">
+                    <button
+                      onClick={() => handleDownload(r)}
+                      className="font-semibold text-accentTeal hover:underline inline-flex items-center gap-1"
+                    >
+                      <Download size={14} /> Download
+                    </button>
                     <button
                       onClick={() => toggleArchive(r.id)}
                       className={`font-semibold ${
