@@ -147,9 +147,11 @@ function Dashboard() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <div className="bg-cardDark p-4 rounded">
               <h2 className="font-bold mb-3">Upcoming Missions</h2>
-              {/* Horizontal scroll wrapper so only the table scrolls, not the whole page */}
+              {/* This wrapper only produces a scrollbar if the table
+                  genuinely doesn't fit — no forced min-width, so it
+                  stays invisible on desktop when everything fits. */}
               <div className="overflow-x-auto">
-                <table className="w-full text-sm min-w-[500px]">
+                <table className="w-full text-sm">
                   <thead>
                     <tr className="text-textBody text-left">
                       <th className="pb-2">Mission</th>
@@ -183,7 +185,7 @@ function Dashboard() {
             <div className="bg-cardDark p-4 rounded">
               <h2 className="font-bold mb-3">Recent Approvals</h2>
               <div className="overflow-x-auto">
-                <table className="w-full text-sm min-w-[500px]">
+                <table className="w-full text-sm">
                   <thead>
                     <tr className="text-textBody text-left">
                       <th className="pb-2">Request</th>
