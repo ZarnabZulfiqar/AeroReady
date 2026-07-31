@@ -157,7 +157,8 @@ function RiskApproval() {
 
   return (
     <div className="w-full">
-      <div className="flex items-start justify-between flex-wrap gap-3 mb-6">
+      {/* Header: title stacks above the mission-picker dropdown on mobile */}
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-6">
         <div>
           <h1 className="text-2xl font-bold mb-1">{mission.name} — Risk Result</h1>
           <p className="text-textBody text-sm">
@@ -165,16 +166,16 @@ function RiskApproval() {
           </p>
         </div>
 
-        <div className="relative">
+        <div className="relative w-full sm:w-auto">
           <button
             onClick={() => setDropdownOpen((o) => !o)}
-            className="px-4 py-2 rounded-lg bg-cardDark border border-gray-700 flex items-center gap-2 text-sm font-semibold hover:border-accentTeal"
+            className="w-full sm:w-auto px-4 py-2 rounded-lg bg-cardDark border border-gray-700 flex items-center justify-between sm:justify-start gap-2 text-sm font-semibold hover:border-accentTeal"
           >
-            {mission.name}
-            <ChevronDown size={16} />
+            <span className="truncate">{mission.name}</span>
+            <ChevronDown size={16} className="shrink-0" />
           </button>
           {dropdownOpen && (
-            <div className="absolute right-0 mt-1 w-56 bg-cardDark border border-gray-700 rounded-lg overflow-hidden z-10">
+            <div className="absolute right-0 mt-1 w-full sm:w-56 bg-cardDark border border-gray-700 rounded-lg overflow-hidden z-10">
               {missions.map((m) => (
                 <button
                   key={m.id}

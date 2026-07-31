@@ -250,29 +250,3 @@ html, body {
 img, table, .card {
   max-width: 100%;
 }
-
-/* Make all tables scroll horizontally within themselves on small screens,
-   instead of breaking the whole page layout */
-table {
-  display: block;
-  overflow-x: auto;
-  white-space: nowrap;
-  max-width: 100%;
-  -webkit-overflow-scrolling: touch;
-}
-
-table thead,
-table tbody,
-table tr {
-  display: table;
-  width: 100%;
-  table-layout: auto;
-}
-
-/* Stack grid cards into a single column on mobile so nothing gets cut off */
-@media (max-width: 768px) {
-  .grid {
-    grid-template-columns: 1fr !important;
-    gap: 12px;
-  }
-}

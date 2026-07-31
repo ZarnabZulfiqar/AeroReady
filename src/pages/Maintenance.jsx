@@ -204,7 +204,8 @@ function Maintenance() {
 
   return (
     <div className="w-full">
-      <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+      {/* Header row: stacks on mobile, side-by-side on larger screens */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
         <h1 className="text-2xl font-bold">Maintenance</h1>
         <button
           onClick={() => {
@@ -245,6 +246,8 @@ function Maintenance() {
         ))}
       </div>
 
+      {/* No forced min-width, so a scrollbar only appears when content
+          genuinely doesn't fit — stays invisible on desktop otherwise */}
       <div className="bg-cardDark p-4 rounded overflow-x-auto">
         {loading ? (
           <p className="text-textBody text-center py-8">Loading issues...</p>
@@ -256,26 +259,26 @@ function Maintenance() {
           <table className="w-full text-sm">
             <thead>
               <tr className="text-textBody text-left">
-                <th className="pb-2">Asset</th>
-                <th className="pb-2">Issue Type</th>
-                <th className="pb-2">Severity</th>
-                <th className="pb-2">Reported By</th>
-                <th className="pb-2">Status</th>
+                <th className="pb-2 pr-4">Asset</th>
+                <th className="pb-2 pr-4">Issue Type</th>
+                <th className="pb-2 pr-4">Severity</th>
+                <th className="pb-2 pr-4">Reported By</th>
+                <th className="pb-2 pr-4">Status</th>
                 <th className="pb-2 text-right">Action</th>
               </tr>
             </thead>
             <tbody>
               {filteredIssues.map((i) => (
                 <tr key={i.id} className="border-t border-gray-700">
-                  <td className="py-3 font-semibold">{i.asset}</td>
-                  <td className="py-3 text-textBody">{i.issueType}</td>
-                  <td className="py-3">
+                  <td className="py-3 pr-4 font-semibold">{i.asset}</td>
+                  <td className="py-3 pr-4 text-textBody">{i.issueType}</td>
+                  <td className="py-3 pr-4">
                     <span className={`px-3 py-1 rounded-full text-xs font-semibold ${severityColor(i.severity)}`}>
                       {i.severity}
                     </span>
                   </td>
-                  <td className="py-3 text-textBody">{i.reportedBy}</td>
-                  <td className="py-3">
+                  <td className="py-3 pr-4 text-textBody">{i.reportedBy}</td>
+                  <td className="py-3 pr-4">
                     <span className={`px-3 py-1 rounded-full text-xs font-semibold ${statusColor(i.status)}`}>
                       {i.status}
                     </span>
@@ -293,7 +296,7 @@ function Maintenance() {
       </div>
 
       {showForm && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
           <form
             onSubmit={handleSaveIssue}
             className="bg-cardDark p-6 rounded-xl w-full max-w-2xl flex flex-col gap-4 relative max-h-[90vh] overflow-y-auto"
@@ -310,7 +313,8 @@ function Maintenance() {
               {editingId ? "Edit Issue" : "Report New Issue"}
             </h2>
 
-            <div className="grid grid-cols-2 gap-4">
+            {/* Form fields: 1 column on mobile, 2 columns from small screens up */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="text-textBody text-sm">Issue ID</label>
                 <input
@@ -381,7 +385,7 @@ function Maintenance() {
             {newIssue.status === "Resolved" && (
               <div className="border-t border-gray-700 pt-4 flex flex-col gap-4">
                 <p className="text-textBody text-xs font-semibold">Resolution details (required)</p>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="text-textBody text-sm">Action Taken</label>
                     <input
@@ -424,7 +428,7 @@ function Maintenance() {
 
             {fieldErrors.form && <p className="text-red-400 text-sm">{fieldErrors.form}</p>}
 
-            <div className="flex justify-end gap-2 mt-3">
+            <div className="flex flex-col sm:flex-row justify-end gap-2 mt-3">
               <button
                 type="button"
                 onClick={() => setShowForm(false)}

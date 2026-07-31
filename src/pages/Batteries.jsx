@@ -239,9 +239,10 @@ function Batteries() {
 
   return (
     <div className="w-full">
-      <div className="flex items-center justify-between mb-4">
+      {/* Header row: stacks on mobile, side-by-side on larger screens */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
         <h1 className="text-2xl font-bold">Battery Management</h1>
-        <div className="flex gap-2 items-center">
+        <div className="flex flex-wrap gap-2 items-center">
           {selectMode ? (
             <>
               <span className="text-textBody text-sm">{selected.length} selected</span>
@@ -302,6 +303,9 @@ function Batteries() {
         ))}
       </div>
 
+      {/* No forced min-width on the table, so a scrollbar only shows up
+          if the content genuinely doesn't fit — stays invisible on
+          desktop when everything fits normally. */}
       <div className="bg-cardDark p-4 rounded overflow-x-auto">
         {loading ? (
           <p className="text-textBody text-center py-8">Loading batteries...</p>
@@ -314,7 +318,7 @@ function Batteries() {
             <thead>
               <tr className="text-textBody text-left">
                 {selectMode && (
-                  <th className="pb-2 w-8">
+                  <th className="pb-2 pr-4 w-8">
                     <input
                       type="checkbox"
                       checked={selected.length === filteredBatteries.length && filteredBatteries.length > 0}
@@ -323,13 +327,13 @@ function Batteries() {
                     />
                   </th>
                 )}
-                <th className="pb-2">ID</th>
-                <th className="pb-2">Capacity</th>
-                <th className="pb-2">Voltage</th>
-                <th className="pb-2">Charge %</th>
-                <th className="pb-2">Cycle Count</th>
-                <th className="pb-2">Health</th>
-                <th className="pb-2">Assigned Drone</th>
+                <th className="pb-2 pr-4">ID</th>
+                <th className="pb-2 pr-4">Capacity</th>
+                <th className="pb-2 pr-4">Voltage</th>
+                <th className="pb-2 pr-4">Charge %</th>
+                <th className="pb-2 pr-4">Cycle Count</th>
+                <th className="pb-2 pr-4">Health</th>
+                <th className="pb-2 pr-4">Assigned Drone</th>
                 <th className="pb-2 text-right">Actions</th>
               </tr>
             </thead>
@@ -345,7 +349,7 @@ function Batteries() {
                   onTouchMove={handleTouchEnd}
                 >
                   {selectMode && (
-                    <td className="py-3" onClick={(e) => e.stopPropagation()}>
+                    <td className="py-3 pr-4" onClick={(e) => e.stopPropagation()}>
                       <input
                         type="checkbox"
                         checked={selected.includes(b.id)}
@@ -354,12 +358,12 @@ function Batteries() {
                       />
                     </td>
                   )}
-                  <td className="py-3 font-semibold">{b.id}</td>
-                  <td className="py-3 text-textBody">{b.capacity}</td>
-                  <td className="py-3 text-textBody">{b.voltage}</td>
-                  <td className="py-3 text-textBody">{b.charge}%</td>
-                  <td className="py-3 text-textBody">{b.cycles}</td>
-                  <td className="py-3">
+                  <td className="py-3 pr-4 font-semibold">{b.id}</td>
+                  <td className="py-3 pr-4 text-textBody">{b.capacity}</td>
+                  <td className="py-3 pr-4 text-textBody">{b.voltage}</td>
+                  <td className="py-3 pr-4 text-textBody">{b.charge}%</td>
+                  <td className="py-3 pr-4 text-textBody">{b.cycles}</td>
+                  <td className="py-3 pr-4">
                     <span className={`font-semibold ${healthColor(b.health)}`}>{b.health}</span>
                     {needsInspection(b) && (
                       <span className="ml-2 inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold bg-red-400/20 text-red-400">
@@ -372,7 +376,7 @@ function Batteries() {
                       </span>
                     )}
                   </td>
-                  <td className="py-3 text-textBody">{b.drone}</td>
+                  <td className="py-3 pr-4 text-textBody">{b.drone}</td>
                   <td className="py-3 text-right whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
                     {!selectMode && (
                       <>
@@ -393,10 +397,10 @@ function Batteries() {
       </div>
 
       {showForm && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
           <form
             onSubmit={handleSaveBattery}
-            className="bg-cardDark p-6 rounded-xl w-full max-w-2xl flex flex-col gap-4 relative"
+            className="bg-cardDark p-6 rounded-xl w-full max-w-2xl flex flex-col gap-4 relative max-h-[90vh] overflow-y-auto"
           >
             <button
               type="button"
@@ -410,7 +414,8 @@ function Batteries() {
               {editingId ? "Edit Battery" : "Add New Battery"}
             </h2>
 
-            <div className="grid grid-cols-2 gap-4">
+            {/* Form fields: 1 column on mobile, 2 columns from small screens up */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="text-textBody text-sm">Battery ID</label>
                 <input
@@ -480,7 +485,7 @@ function Batteries() {
                 </select>
               </div>
 
-              <div className="col-span-2">
+              <div className="col-span-1 sm:col-span-2">
                 <label className="text-textBody text-sm">Assigned Drone</label>
                 <select
                   value={newBattery.droneId}
@@ -497,7 +502,7 @@ function Batteries() {
 
             {fieldErrors.form && <p className="text-red-400 text-sm">{fieldErrors.form}</p>}
 
-            <div className="flex justify-end gap-2 mt-3">
+            <div className="flex flex-col sm:flex-row justify-end gap-2 mt-3">
               <button
                 type="button"
                 onClick={() => setShowForm(false)}
@@ -514,7 +519,7 @@ function Batteries() {
       )}
 
       {confirmDisable && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
           <div className="bg-cardDark p-6 rounded-xl w-full max-w-sm text-center">
             <h2 className="text-lg font-bold mb-2">
               {confirmDisable.type === "single"
@@ -525,7 +530,7 @@ function Batteries() {
               Disabling keeps the battery's inspection and assignment history
               intact, but stops it from being assigned to new missions.
             </p>
-            <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row gap-2">
               <button
                 onClick={() => setConfirmDisable(null)}
                 className="flex-1 py-2 rounded border border-gray-600 text-textBody hover:border-accentTeal"

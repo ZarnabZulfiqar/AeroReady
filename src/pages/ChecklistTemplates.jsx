@@ -300,7 +300,7 @@ function ChecklistTemplates() {
             No {filter === "All" ? "" : filter} Items{filter === "All" ? " Found" : ""}
           </p>
         ) : (
-          <table className="w-full text-sm min-w-[800px]">
+          <table className="w-full text-sm">
             <thead>
               <tr className="text-textBody text-left">
                 {selectMode && (

@@ -207,21 +207,22 @@ function Reports() {
         </div>
       </form>
 
-      <div className="flex items-center justify-between mb-3 flex-wrap gap-3">
+      {/* Header row: title + search stack on mobile, side-by-side on larger screens */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-3 gap-3">
         <h2 className="text-lg font-bold">Generated Reports</h2>
-        <div className="relative">
+        <div className="relative w-full sm:w-auto">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-textBody" />
           <input
             type="text"
             placeholder="Search reports..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-9 pr-3 py-2 rounded bg-cardDark border border-gray-700 text-white outline-none focus:border-accentTeal text-sm"
+            className="w-full sm:w-auto pl-9 pr-3 py-2 rounded bg-cardDark border border-gray-700 text-white outline-none focus:border-accentTeal text-sm"
           />
         </div>
       </div>
 
-      <div className="flex items-center gap-2 mb-4">
+      <div className="flex items-center gap-2 mb-4 flex-wrap">
         {[
           { key: "All", label: `All (${generatedReports.length})` },
           { key: "Active", label: `Active (${activeCount})` },
@@ -243,6 +244,8 @@ function Reports() {
 
       {error && <p className="text-red-400 text-sm mb-3">{error}</p>}
 
+      {/* No forced min-width, so a scrollbar only appears when content
+          genuinely doesn't fit — stays invisible on desktop otherwise */}
       <div className="bg-cardDark p-4 rounded overflow-x-auto">
         {loading ? (
           <p className="text-textBody text-center py-8">Loading reports...</p>
@@ -252,26 +255,26 @@ function Reports() {
           <table className="w-full text-sm">
             <thead>
               <tr className="text-textBody text-left">
-                <th className="pb-2">Report</th>
-                <th className="pb-2">Format</th>
-                <th className="pb-2">Generated</th>
-                <th className="pb-2">By</th>
-                <th className="pb-2">Status</th>
+                <th className="pb-2 pr-4">Report</th>
+                <th className="pb-2 pr-4">Format</th>
+                <th className="pb-2 pr-4">Generated</th>
+                <th className="pb-2 pr-4">By</th>
+                <th className="pb-2 pr-4">Status</th>
                 <th className="pb-2 text-right">Action</th>
               </tr>
             </thead>
             <tbody>
               {filteredReports.map((r) => (
                 <tr key={r.id} className="border-t border-gray-700">
-                  <td className="py-3 font-semibold">{r.name}</td>
-                  <td className="py-3">
+                  <td className="py-3 pr-4 font-semibold">{r.name}</td>
+                  <td className="py-3 pr-4">
                     <span className={`px-3 py-1 rounded-full text-xs font-semibold ${formatColor(r.format)}`}>
                       {r.format}
                     </span>
                   </td>
-                  <td className="py-3 text-textBody">{r.date}</td>
-                  <td className="py-3 text-textBody">{r.by}</td>
-                  <td className="py-3">
+                  <td className="py-3 pr-4 text-textBody">{r.date}</td>
+                  <td className="py-3 pr-4 text-textBody">{r.by}</td>
+                  <td className="py-3 pr-4">
                     <span className={`px-3 py-1 rounded-full text-xs font-semibold ${statusColor(r.status)}`}>
                       {r.status}
                     </span>

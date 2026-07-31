@@ -99,6 +99,8 @@ function Traceability() {
 
       {error && <p className="text-red-400 text-sm mb-3">{error}</p>}
 
+      {/* No forced min-width, so a scrollbar only appears when content
+          genuinely doesn't fit — stays invisible on desktop otherwise */}
       <div className="bg-cardDark p-4 rounded overflow-x-auto">
         {loading ? (
           <p className="text-textBody text-center py-8">Loading records...</p>
@@ -108,20 +110,20 @@ function Traceability() {
           <table className="w-full text-sm">
             <thead>
               <tr className="text-textBody text-left">
-                <th className="pb-2">FR ID</th>
-                <th className="pb-2">Design Reference</th>
-                <th className="pb-2">Implementation</th>
-                <th className="pb-2">Test Case</th>
+                <th className="pb-2 pr-4">FR ID</th>
+                <th className="pb-2 pr-4">Design Reference</th>
+                <th className="pb-2 pr-4">Implementation</th>
+                <th className="pb-2 pr-4">Test Case</th>
                 <th className="pb-2">Status</th>
               </tr>
             </thead>
             <tbody>
               {filteredRecords.map((r) => (
                 <tr key={r.frId} className="border-t border-gray-700">
-                  <td className="py-3 font-semibold text-accentTeal">{r.frId}</td>
-                  <td className="py-3">{r.design}</td>
-                  <td className="py-3 text-textBody font-mono text-xs">{r.impl}</td>
-                  <td className="py-3 text-textBody">{r.testCase}</td>
+                  <td className="py-3 pr-4 font-semibold text-accentTeal">{r.frId}</td>
+                  <td className="py-3 pr-4">{r.design}</td>
+                  <td className="py-3 pr-4 text-textBody font-mono text-xs">{r.impl}</td>
+                  <td className="py-3 pr-4 text-textBody">{r.testCase}</td>
                   <td className="py-3">
                     <span className={`px-3 py-1 rounded-full text-xs font-semibold ${statusColor(r.status)}`}>
                       {r.status}

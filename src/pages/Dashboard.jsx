@@ -147,16 +147,16 @@ function Dashboard() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <div className="bg-cardDark p-4 rounded">
               <h2 className="font-bold mb-3">Upcoming Missions</h2>
-              {/* This wrapper only produces a scrollbar if the table
-                  genuinely doesn't fit — no forced min-width, so it
-                  stays invisible on desktop when everything fits. */}
+              {/* No forced min-width, so a scrollbar only appears if the
+                  table genuinely doesn't fit — stays invisible on desktop
+                  when everything fits normally. */}
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="text-textBody text-left">
-                      <th className="pb-2">Mission</th>
-                      <th className="pb-2">Date</th>
-                      <th className="pb-2">Drone</th>
+                      <th className="pb-2 pr-4">Mission</th>
+                      <th className="pb-2 pr-4">Date</th>
+                      <th className="pb-2 pr-4">Drone</th>
                       <th className="pb-2">Status</th>
                     </tr>
                   </thead>
@@ -168,9 +168,9 @@ function Dashboard() {
                     ) : (
                       missions.map((m) => (
                         <tr key={m.id} className="border-t border-gray-700">
-                          <td className="py-2">{m.name}</td>
-                          <td className="py-2 text-textBody">{m.scheduled_date}</td>
-                          <td className="py-2 text-textBody">
+                          <td className="py-2 pr-4">{m.name}</td>
+                          <td className="py-2 pr-4 text-textBody">{m.scheduled_date}</td>
+                          <td className="py-2 pr-4 text-textBody">
                             {m.drones ? `${m.drone_id} (${m.drones.model})` : m.drone_id || "—"}
                           </td>
                           <td className={`py-2 font-semibold ${statusColor(m.status)}`}>{m.status}</td>
@@ -188,9 +188,9 @@ function Dashboard() {
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="text-textBody text-left">
-                      <th className="pb-2">Request</th>
-                      <th className="pb-2">Submitted</th>
-                      <th className="pb-2">Approver</th>
+                      <th className="pb-2 pr-4">Request</th>
+                      <th className="pb-2 pr-4">Submitted</th>
+                      <th className="pb-2 pr-4">Approver</th>
                       <th className="pb-2">Decision</th>
                     </tr>
                   </thead>
@@ -202,11 +202,11 @@ function Dashboard() {
                     ) : (
                       approvals.map((a) => (
                         <tr key={a.id} className="border-t border-gray-700">
-                          <td className="py-2">{a.name}</td>
-                          <td className="py-2 text-textBody">
+                          <td className="py-2 pr-4">{a.name}</td>
+                          <td className="py-2 pr-4 text-textBody">
                             {a.decided_at ? new Date(a.decided_at).toLocaleDateString() : "—"}
                           </td>
-                          <td className="py-2 text-textBody">{a.decided_by || "—"}</td>
+                          <td className="py-2 pr-4 text-textBody">{a.decided_by || "—"}</td>
                           <td className={`py-2 font-semibold ${statusColor(a.decision)}`}>{a.decision}</td>
                         </tr>
                       ))

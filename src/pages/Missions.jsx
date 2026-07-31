@@ -263,9 +263,10 @@ function Missions() {
 
   return (
     <div className="w-full">
-      <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+      {/* Header row: stacks on mobile, side-by-side on larger screens */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-3">
         <h1 className="text-2xl font-bold">Mission Management</h1>
-        <div className="flex gap-2 items-center">
+        <div className="flex flex-wrap gap-2 items-center">
           {selectMode ? (
             <>
               <span className="text-textBody text-sm">{selected.length} selected</span>
@@ -307,6 +308,8 @@ function Missions() {
         ))}
       </div>
 
+      {/* No forced min-width, so a scrollbar only appears when content
+          genuinely doesn't fit — stays invisible on desktop otherwise */}
       <div className="bg-cardDark p-4 rounded overflow-x-auto">
         {loading ? (
           <p className="text-textBody text-center py-8">Loading missions...</p>
@@ -317,7 +320,7 @@ function Missions() {
             <thead>
               <tr className="text-textBody text-left">
                 {selectMode && (
-                  <th className="pb-2 w-8">
+                  <th className="pb-2 pr-4 w-8">
                     <input
                       type="checkbox"
                       checked={
@@ -329,14 +332,14 @@ function Missions() {
                     />
                   </th>
                 )}
-                <th className="pb-2">ID</th>
-                <th className="pb-2">Mission</th>
-                <th className="pb-2">Drone</th>
-                <th className="pb-2">Battery</th>
-                <th className="pb-2">Pilot</th>
-                <th className="pb-2">Location</th>
-                <th className="pb-2">Date</th>
-                <th className="pb-2">Status</th>
+                <th className="pb-2 pr-4">ID</th>
+                <th className="pb-2 pr-4">Mission</th>
+                <th className="pb-2 pr-4">Drone</th>
+                <th className="pb-2 pr-4">Battery</th>
+                <th className="pb-2 pr-4">Pilot</th>
+                <th className="pb-2 pr-4">Location</th>
+                <th className="pb-2 pr-4">Date</th>
+                <th className="pb-2 pr-4">Status</th>
                 <th className="pb-2 text-right">Actions</th>
               </tr>
             </thead>
@@ -352,7 +355,7 @@ function Missions() {
                   onTouchMove={handleTouchEnd}
                 >
                   {selectMode && (
-                    <td className="py-3" onClick={(e) => e.stopPropagation()}>
+                    <td className="py-3 pr-4" onClick={(e) => e.stopPropagation()}>
                       <input
                         type="checkbox"
                         checked={selected.includes(m.id)}
@@ -362,14 +365,14 @@ function Missions() {
                       />
                     </td>
                   )}
-                  <td className="py-3 font-semibold">{m.id}</td>
-                  <td className="py-3 text-textBody">{m.name}</td>
-                  <td className="py-3 text-textBody">{m.drone}</td>
-                  <td className="py-3 text-textBody">{m.battery}</td>
-                  <td className="py-3 text-textBody">{m.pilot}</td>
-                  <td className="py-3 text-textBody">{m.location}</td>
-                  <td className="py-3 text-textBody">{m.date}</td>
-                  <td className={`py-3 font-semibold ${statusColor(m.status)}`}>{m.status}</td>
+                  <td className="py-3 pr-4 font-semibold">{m.id}</td>
+                  <td className="py-3 pr-4 text-textBody">{m.name}</td>
+                  <td className="py-3 pr-4 text-textBody">{m.drone}</td>
+                  <td className="py-3 pr-4 text-textBody">{m.battery}</td>
+                  <td className="py-3 pr-4 text-textBody">{m.pilot}</td>
+                  <td className="py-3 pr-4 text-textBody">{m.location}</td>
+                  <td className="py-3 pr-4 text-textBody">{m.date}</td>
+                  <td className={`py-3 pr-4 font-semibold ${statusColor(m.status)}`}>{m.status}</td>
                   <td className="py-3 text-right whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
                     {!selectMode && (
                       <>
@@ -393,11 +396,12 @@ function Missions() {
       </p>
 
       {showForm && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
           <form onSubmit={handleSaveMission} className="bg-cardDark p-6 rounded-xl w-full max-w-2xl flex flex-col gap-4 relative max-h-[90vh] overflow-y-auto">
             <button type="button" onClick={() => setShowForm(false)} className="absolute top-4 right-4 text-textBody hover:text-white text-lg">✕</button>
             <h2 className="text-lg font-bold mb-2">{editingId ? "Edit Mission" : "Add New Mission"}</h2>
-            <div className="grid grid-cols-2 gap-4">
+            {/* Form fields: 1 column on mobile, 2 columns from small screens up */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="text-textBody text-sm">Mission ID</label>
                 <input placeholder="e.g. MS-104" value={newMission.id} disabled={!!editingId}
@@ -477,16 +481,24 @@ function Missions() {
                   id="payloadRequired"
                   checked={newMission.payloadRequired}
                   onChange={(e) => setNewMission({ ...newMission, payloadRequired: e.target.checked })}
-                  className="accent-accentTeal w-4 h-4"
+                  className="accent-accentTeal"
                 />
-                <label htmlFor="payloadRequired" className="text-textBody text-sm">Payload / camera required</label>
+                <label htmlFor="payloadRequired" className="text-textBody text-sm">
+                  Payload / camera required for this mission
+                </label>
               </div>
             </div>
 
             {fieldErrors.form && <p className="text-red-400 text-sm">{fieldErrors.form}</p>}
 
-            <div className="flex justify-end gap-2 mt-3">
-              <button type="button" onClick={() => setShowForm(false)} className="px-5 py-2 rounded border border-gray-600 text-textBody hover:border-accentTeal">Cancel</button>
+            <div className="flex flex-col sm:flex-row justify-end gap-2 mt-3">
+              <button
+                type="button"
+                onClick={() => setShowForm(false)}
+                className="px-5 py-2 rounded border border-gray-600 text-textBody hover:border-accentTeal"
+              >
+                Cancel
+              </button>
               <button type="submit" disabled={saving} className="btn-primary disabled:opacity-50">
                 {saving ? "Saving..." : editingId ? "Save Changes" : "Add Mission"}
               </button>
@@ -496,13 +508,29 @@ function Missions() {
       )}
 
       {confirmDelete && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
           <div className="bg-cardDark p-6 rounded-xl w-full max-w-sm text-center">
-            <h2 className="text-lg font-bold mb-2">{confirmDelete.type === "single" ? "Delete this item?" : `Delete ${selected.length} items?`}</h2>
-            <p className="text-textBody text-sm mb-6">Are you sure you want to delete {confirmDelete.type === "single" ? "this item" : "these items"}? This action cannot be undone.</p>
-            <div className="flex gap-2">
-              <button onClick={() => setConfirmDelete(null)} className="flex-1 py-2 rounded border border-gray-600 text-textBody hover:border-accentTeal">Cancel</button>
-              <button onClick={executeDelete} className="flex-1 py-2 rounded bg-red-500 text-white font-semibold hover:bg-red-600">Delete</button>
+            <h2 className="text-lg font-bold mb-2">
+              {confirmDelete.type === "single"
+                ? "Delete this mission?"
+                : `Delete ${selected.length} missions?`}
+            </h2>
+            <p className="text-textBody text-sm mb-6">
+              This will permanently remove the Draft mission record. This action cannot be undone.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-2">
+              <button
+                onClick={() => setConfirmDelete(null)}
+                className="flex-1 py-2 rounded border border-gray-600 text-textBody hover:border-accentTeal"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={executeDelete}
+                className="flex-1 py-2 rounded bg-red-500 text-white font-semibold hover:bg-red-600"
+              >
+                Confirm
+              </button>
             </div>
           </div>
         </div>
@@ -512,3 +540,4 @@ function Missions() {
 }
 
 export default Missions;
+              

@@ -168,7 +168,7 @@ function Users() {
       {error && <p className="text-red-400 text-sm mb-3">{error}</p>}
 
       {/* Status filter tabs */}
-      <div className="flex items-center gap-2 mb-4">
+      <div className="flex items-center gap-2 mb-4 flex-wrap">
         {[
           { key: "All", label: `All (${users.length})` },
           { key: "Active", label: `Active (${activeCount})` },
@@ -213,6 +213,8 @@ function Users() {
         </button>
       </div>
 
+      {/* No forced min-width, so a scrollbar only appears when content
+          genuinely doesn't fit — stays invisible on desktop otherwise */}
       <div className="bg-cardDark p-4 rounded overflow-x-auto">
         {loading ? (
           <p className="text-textBody text-center py-8">Loading users...</p>
@@ -222,20 +224,20 @@ function Users() {
           <table className="w-full text-sm">
             <thead>
               <tr className="text-textBody text-left">
-                <th className="pb-2">Name</th>
-                <th className="pb-2">Email</th>
-                <th className="pb-2">Role</th>
-                <th className="pb-2">Status</th>
+                <th className="pb-2 pr-4">Name</th>
+                <th className="pb-2 pr-4">Email</th>
+                <th className="pb-2 pr-4">Role</th>
+                <th className="pb-2 pr-4">Status</th>
                 <th className="pb-2 text-right">Action</th>
               </tr>
             </thead>
             <tbody>
               {filteredUsers.map((u) => (
                 <tr key={u.id} className="border-t border-gray-700">
-                  <td className="py-3 font-semibold">{u.name}</td>
-                  <td className="py-3 text-textBody">{u.email}</td>
-                  <td className="py-3">{u.role}</td>
-                  <td className="py-3">
+                  <td className="py-3 pr-4 font-semibold">{u.name}</td>
+                  <td className="py-3 pr-4 text-textBody">{u.email}</td>
+                  <td className="py-3 pr-4">{u.role}</td>
+                  <td className="py-3 pr-4">
                     <span className={`px-3 py-1 rounded-full text-xs font-semibold ${statusColor(u.status)}`}>
                       {u.status}
                     </span>
@@ -247,7 +249,7 @@ function Users() {
                       </span>
                     )}
                   </td>
-                  <td className="py-3 text-right">
+                  <td className="py-3 text-right whitespace-nowrap">
                     <button onClick={() => handleEdit(u)} className="text-accentTeal font-semibold mr-3">
                       Edit
                     </button>
@@ -267,10 +269,10 @@ function Users() {
       </div>
 
       {showForm && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
           <form
             onSubmit={handleSaveUser}
-            className="bg-cardDark p-6 rounded-xl w-full max-w-md flex flex-col gap-4 relative"
+            className="bg-cardDark p-6 rounded-xl w-full max-w-md flex flex-col gap-4 relative max-h-[90vh] overflow-y-auto"
           >
             <button
               type="button"
@@ -336,7 +338,7 @@ function Users() {
 
             {fieldErrors.form && <p className="text-red-400 text-sm">{fieldErrors.form}</p>}
 
-            <div className="flex justify-end gap-2 mt-3">
+            <div className="flex flex-col sm:flex-row justify-end gap-2 mt-3">
               <button
                 type="button"
                 onClick={() => setShowForm(false)}
