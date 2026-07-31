@@ -21,17 +21,25 @@ function ChecklistItem({ item, status, evidenceAttached, onStatusChange, onAttac
           {item.note && <p className="text-textBody text-xs mt-1">{item.note}</p>}
 
           {item.evidenceRequired && (
-            <button
-              onClick={() => onAttachEvidence(item.id)}
-              className={`mt-2 flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded ${
-                evidenceAttached
-                  ? "text-accentTeal bg-accentTeal/10"
-                  : "text-orange-400 bg-orange-400/10 hover:bg-orange-400/20"
-              }`}
-            >
-              {evidenceAttached ? <Check size={12} /> : <Paperclip size={12} />}
-              {evidenceAttached ? "Evidence attached" : "Attach evidence"}
-            </button>
+            <>
+              <input
+                type="file"
+                id={`evidence-input-${item.id}`}
+                className="hidden"
+                onChange={(e) => onAttachEvidence(item.id, e.target.files[0])}
+              />
+              <label
+                htmlFor={`evidence-input-${item.id}`}
+                className={`mt-2 inline-flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded cursor-pointer ${
+                  evidenceAttached
+                    ? "text-accentTeal bg-accentTeal/10"
+                    : "text-orange-400 bg-orange-400/10 hover:bg-orange-400/20"
+                }`}
+              >
+                {evidenceAttached ? <Check size={12} /> : <Paperclip size={12} />}
+                {evidenceAttached ? "Evidence attached" : "Attach evidence"}
+              </label>
+            </>
           )}
         </div>
 
@@ -165,9 +173,25 @@ function MissionChecklist() {
     if (error) setError("Failed to save item status. " + error.message);
   }
 
-  async function handleAttachEvidence(id) {
-    const newAttached = !evidenceMap[id];
-    setEvidenceMap((prev) => ({ ...prev, [id]: newAttached }));
+  // Uploads the selected file to Supabase Storage (private bucket) and
+  // stores the resulting storage path as evidence_reference so it can
+  // later be viewed via a signed URL (SEC-FILE-02).
+  async function handleAttachEvidence(id, file) {
+    if (!file) return;
+
+    setError("");
+    const filePath = `${missionId}/${id}-${Date.now()}-${file.name}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from("checklist-evidence")
+      .upload(filePath, file);
+
+    if (uploadError) {
+      setError("Failed to upload evidence. " + uploadError.message);
+      return;
+    }
+
+    setEvidenceMap((prev) => ({ ...prev, [id]: true }));
 
     const { error } = await supabase.from("checklist_results").upsert(
       {
@@ -175,11 +199,11 @@ function MissionChecklist() {
         mission_id: missionId,
         item_id: id,
         outcome: statuses[id] || "Pending",
-        evidence_reference: newAttached ? "attached" : null,
+        evidence_reference: filePath,
       },
       { onConflict: "result_id" }
     );
-    if (error) setError("Failed to save evidence. " + error.message);
+    if (error) setError("Failed to save evidence reference. " + error.message);
   }
 
   function toggleSection(title) {
@@ -321,9 +345,6 @@ function MissionChecklist() {
       </div>
 
       <div className="mt-4 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-        <button className="px-5 py-2 rounded-full border border-gray-600 text-textBody text-sm flex items-center justify-center gap-2 hover:border-accentTeal transition-colors">
-          <Upload size={16} /> Upload evidence
-        </button>
         <button
           onClick={handleSubmit}
           disabled={saving}
