@@ -69,9 +69,9 @@ function Sidebar({ onLogout, isOpen = false, onClose = () => {} }) {
         }
 
         const { data, error } = await supabase
-          .from("users")
+          .from("profiles")
           .select("role")
-          .eq("user_id", session.user.id)
+          .eq("id", session.user.id)
           .single();
 
         if (error) {
