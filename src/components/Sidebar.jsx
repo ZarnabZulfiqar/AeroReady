@@ -18,20 +18,21 @@ import {
 } from "lucide-react";
 
 // roles: undefined = sab dekh sakte hain, array diya toh sirf unhi roles ko dikhega
+// Role mapping SRS Table 4.2 (Use Case List) ke according:
 const navItems = [
   { key: "dashboard", label: "Dashboard", icon: LayoutDashboard, path: "/dashboard" }, // UC-03: All Actors
-  { key: "drones", label: "Drones", icon: Plane, path: "/drones", roles: ["Administrator"] }, // UC-04
-  { key: "batteries", label: "Batteries", icon: BatteryFull, path: "/batteries", roles: ["Administrator", "Technician"] }, // UC-05
-  { key: "missions", label: "Missions", icon: MapPin, path: "/missions", roles: ["Administrator", "Operator"] }, // UC-07/08/16, UC-10/11
-  { key: "checklist-templates", label: "Checklist Templates", icon: ClipboardCheck, path: "/checklist-templates", roles: ["Administrator"] }, // UC-06
+  { key: "drones", label: "Drones", icon: Plane, path: "/drones", roles: ["Administrator"] }, // UC-04: Administrator
+  { key: "batteries", label: "Batteries", icon: BatteryFull, path: "/batteries", roles: ["Administrator", "Technician"] }, // UC-05: Administrator, Technician
+  { key: "missions", label: "Missions", icon: MapPin, path: "/missions", roles: ["Operator"] }, // UC-07/08/16: Operator only
+  { key: "checklist-templates", label: "Checklist Templates", icon: ClipboardCheck, path: "/checklist-templates", roles: ["Administrator"] }, // UC-06: Administrator
 ];
 
 const bottomNavItems = [
-  { key: "risk-approval", label: "Risk & Approval", icon: ShieldAlert, path: "/risk-approval", roles: ["Administrator", "Operator"] }, // UC-10, UC-11
-  { key: "maintenance", label: "Maintenance", icon: Wrench, path: "/maintenance", roles: ["Administrator", "Operator", "Technician"] }, // UC-12, UC-13
-  { key: "reports", label: "Reports", icon: FileText, path: "/reports", roles: ["Administrator", "Operator", "Viewer"] }, // UC-14
-  { key: "traceability", label: "Traceability", icon: GitBranch, path: "/traceability", roles: ["Administrator", "Viewer"] }, // UC-15
-  { key: "users", label: "Users", icon: Users, path: "/users", roles: ["Administrator"] }, // UC-02
+  { key: "risk-approval", label: "Risk & Approval", icon: ShieldAlert, path: "/risk-approval", roles: ["Administrator", "Operator"] }, // UC-10: Operator, Administrator; UC-11: Administrator
+  { key: "maintenance", label: "Maintenance", icon: Wrench, path: "/maintenance", roles: ["Operator", "Technician"] }, // UC-12: Operator, Technician; UC-13: Technician
+  { key: "reports", label: "Reports", icon: FileText, path: "/reports", roles: ["Administrator", "Operator", "Viewer"] }, // UC-14: Viewer, Administrator, Operator
+  { key: "traceability", label: "Traceability", icon: GitBranch, path: "/traceability", roles: ["Administrator", "Viewer"] }, // UC-15: Viewer, Administrator
+  { key: "users", label: "Users", icon: Users, path: "/users", roles: ["Administrator"] }, // UC-02: Administrator
   { key: "settings", label: "Settings", icon: SettingsIcon, path: "/settings" }, // SRS mein koi UC nahi — confirm karein
 ];
 

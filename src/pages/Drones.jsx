@@ -425,7 +425,6 @@ function Drones() {
                   onChange={(e) => setNewDrone({ ...newDrone, type: e.target.value })}
                   className="w-full mt-1 p-2 rounded bg-bgDark border border-gray-700 text-white outline-none focus:border-accentTeal"
                 >
-                  <option value="">Select type...</option>
                   <option>Quadcopter</option>
                   <option>Fixed-Wing VTOL</option>
                   <option>Micro Quad</option>
@@ -440,7 +439,6 @@ function Drones() {
                   className="w-full mt-1 p-2 rounded bg-bgDark border border-gray-700 text-white outline-none focus:border-accentTeal"
                 >
                   <option>Available</option>
-                  <option>In Mission</option>
                   <option>Maintenance</option>
                   <option>Damaged</option>
                 </select>
