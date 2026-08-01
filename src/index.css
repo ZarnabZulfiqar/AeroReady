@@ -47,3 +47,14 @@
     min-height: 0 !important;
   }
 }
+html, body {
+  overflow-x: hidden;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+img, table, .card {
+  max-width: 100%;
+}
