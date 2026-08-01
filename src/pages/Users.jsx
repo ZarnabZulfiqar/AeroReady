@@ -17,7 +17,6 @@ function Users() {
   const emptyUser = { name: "", email: "", role: "Operator", status: "Active" };
   const [newUser, setNewUser] = useState(emptyUser);
 
-  // Include is_locked when mapping a row from the database
   function mapFromDb(row) {
     return {
       id: row.id,
@@ -25,7 +24,6 @@ function Users() {
       email: row.email,
       role: row.role,
       status: row.status,
-      isLocked: row.is_locked,
     };
   }
 
@@ -93,8 +91,6 @@ function Users() {
     setSaving(true);
 
     if (editingId) {
-      // FR-004: Administrator can assign/change a user's role;
-      // FR-003: edit/deactivate/reactivate an existing account.
       const { error } = await supabase
         .from("profiles")
         .update({
@@ -110,12 +106,6 @@ function Users() {
         return;
       }
     } else {
-      // FR-003: Administrator can create a new login-capable account.
-      // A real Auth user (not just a profiles row) can only be created with
-      // the service-role key, which must never live in client-side code
-      // (SEC-DAT-03) — so this calls a Supabase Edge Function that holds
-      // that key server-side and creates both the auth user and the
-      // profiles row.
       const { data: sessionData } = await supabase.auth.getSession();
       const { data, error } = await supabase.functions.invoke("create-user", {
         body: {
@@ -149,25 +139,12 @@ function Users() {
     setShowForm(true);
   }
 
-  // Calls the admin_unlock_account RPC function.
-  // Only succeeds if the currently logged-in user is an Administrator
-  // (enforced server-side inside the Postgres function).
-  async function handleUnlock(userId) {
-    const { error } = await supabase.rpc("admin_unlock_account", { p_user_id: userId });
-    if (error) {
-      setError("Failed to unlock account. " + error.message);
-    } else {
-      fetchUsers();
-    }
-  }
-
   return (
     <div className="w-full">
       <h1 className="text-2xl font-bold mb-4">Users & Roles</h1>
 
       {error && <p className="text-red-400 text-sm mb-3">{error}</p>}
 
-      {/* Status filter tabs */}
       <div className="flex items-center gap-2 mb-4 flex-wrap">
         {[
           { key: "All", label: `All (${users.length})` },
@@ -213,8 +190,6 @@ function Users() {
         </button>
       </div>
 
-      {/* No forced min-width, so a scrollbar only appears when content
-          genuinely doesn't fit — stays invisible on desktop otherwise */}
       <div className="bg-cardDark p-4 rounded overflow-x-auto">
         {loading ? (
           <p className="text-textBody text-center py-8">Loading users...</p>
@@ -241,25 +216,11 @@ function Users() {
                     <span className={`px-3 py-1 rounded-full text-xs font-semibold ${statusColor(u.status)}`}>
                       {u.status}
                     </span>
-                    {/* Show a red "Locked" badge if the account was locked
-                        by the failed-login-attempt system */}
-                    {u.isLocked && (
-                      <span className="ml-2 px-2 py-1 rounded-full text-xs font-semibold bg-red-500/20 text-red-400">
-                        Locked
-                      </span>
-                    )}
                   </td>
                   <td className="py-3 text-right whitespace-nowrap">
                     <button onClick={() => handleEdit(u)} className="text-accentTeal font-semibold mr-3">
                       Edit
                     </button>
-                    {/* Unlock button only shows for locked accounts.
-                        Only an Administrator can successfully call this. */}
-                    {u.isLocked && (
-                      <button onClick={() => handleUnlock(u.id)} className="text-orange-400 font-semibold">
-                        Unlock
-                      </button>
-                    )}
                   </td>
                 </tr>
               ))}

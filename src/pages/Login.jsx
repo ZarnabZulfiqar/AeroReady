@@ -14,54 +14,16 @@ function Login() {
     setError("");
     setLoading(true);
 
-    // Step 1: Check lock status before attempting login
-    const { data: lockData } = await supabase.rpc("check_account_lock", { p_email: email });
-
-    if (lockData && lockData.length > 0) {
-      const status = lockData[0];
-
-      if (status.is_locked) {
-        setError("Your account has been locked due to multiple failed login attempts. Please contact your administrator.");
-        setLoading(false);
-        return;
-      }
-
-      if (status.locked_until && new Date(status.locked_until) > new Date()) {
-        const waitMins = Math.ceil((new Date(status.locked_until) - new Date()) / 60000);
-        setError(`Too many failed attempts. Please wait ${waitMins} minute(s) before trying again.`);
-        setLoading(false);
-        return;
-      }
-    }
-
-    // Step 2: Normal login attempt
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
 
     if (error) {
-      // Login failed — increment failed attempt count
-      const { data: failData } = await supabase.rpc("register_failed_login", { p_email: email });
-
-      if (failData && failData.length > 0) {
-        const result = failData[0];
-        if (result.is_locked) {
-          setError("Your account has been locked due to multiple failed login attempts. Please contact your administrator.");
-        } else if (result.locked_until) {
-          setError("Too many failed attempts. Please wait a couple of minutes before trying again.");
-        } else {
-          setError("Invalid login credentials");
-        }
-      } else {
-        setError("Invalid login credentials");
-      }
+      setError("Invalid login credentials");
       setLoading(false);
       return;
     }
-
-    // Login successful — reset lock counters
-    await supabase.rpc("reset_login_lock", { p_email: email });
 
     // FR-005 / BR-001: deactivated user account shall not be permitted to authenticate
     const { data: profile, error: profileError } = await supabase
