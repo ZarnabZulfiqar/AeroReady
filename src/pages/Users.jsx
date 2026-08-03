@@ -14,7 +14,7 @@ function Users() {
   const [fieldErrors, setFieldErrors] = useState({});
   const [saving, setSaving] = useState(false);
 
-  const emptyUser = { name: "", email: "", role: "Operator", status: "Active" };
+  const emptyUser = { name: "", email: "", password: "", role: "Operator", status: "Active" };
   const [newUser, setNewUser] = useState(emptyUser);
 
   function mapFromDb(row) {
@@ -75,6 +75,13 @@ function Users() {
         errs.email = "A user with this email already exists.";
       }
     }
+    if (!editingId) {
+      if (!newUser.password) {
+        errs.password = "Password is required.";
+      } else if (newUser.password.length < 6) {
+        errs.password = "Password must be at least 6 characters.";
+      }
+    }
     return errs;
   }
 
@@ -110,6 +117,7 @@ function Users() {
       const { data, error } = await supabase.functions.invoke("create-user", {
         body: {
           email: newUser.email,
+          password: newUser.password,
           full_name: newUser.name,
           role: newUser.role,
         },
@@ -133,7 +141,7 @@ function Users() {
   }
 
   function handleEdit(user) {
-    setNewUser(user);
+    setNewUser({ ...user, password: "" });
     setEditingId(user.id);
     setFieldErrors({});
     setShowForm(true);
@@ -271,6 +279,20 @@ function Users() {
               {fieldErrors.email && <p className="text-red-400 text-xs mt-1">{fieldErrors.email}</p>}
             </div>
 
+            {!editingId && (
+              <div>
+                <label className="text-textBody text-sm">Password</label>
+                <input
+                  type="password"
+                  placeholder="Set a password for this user"
+                  value={newUser.password}
+                  onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
+                  className="w-full mt-1 p-2 rounded bg-bgDark border border-gray-700 text-white outline-none focus:border-accentTeal"
+                />
+                {fieldErrors.password && <p className="text-red-400 text-xs mt-1">{fieldErrors.password}</p>}
+              </div>
+            )}
+
             <div>
               <label className="text-textBody text-sm">Role</label>
               <select
@@ -300,10 +322,10 @@ function Users() {
             {fieldErrors.form && <p className="text-red-400 text-sm">{fieldErrors.form}</p>}
 
             <div className="flex justify-end mt-3">
-  <button type="submit" disabled={saving} className="btn-primary">
-    {saving ? "Saving..." : editingId ? "Save Changes" : "Add User"}
-  </button>
-</div>
+              <button type="submit" disabled={saving} className="btn-primary">
+                {saving ? "Saving..." : editingId ? "Save Changes" : "Add User"}
+              </button>
+            </div>
           </form>
         </div>
       )}
