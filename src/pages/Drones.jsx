@@ -289,7 +289,7 @@ function Drones() {
         ) : (
           // Horizontal scroll wrapper so only the table scrolls on mobile, not the whole page
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+            <table className="min-w-[650px]text-sm">
               <thead>
                 <tr className="text-textBody text-left">
                   {selectMode && (
