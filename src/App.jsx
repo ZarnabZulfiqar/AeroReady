@@ -113,7 +113,7 @@ function AppLayout({ children }) {
           </button>
 
           <button
-            onClick={handleLogout}
+            onClick={() => NavigationCurrentEntryChangeEvent("/settings")}
             className="w-8 h-8 rounded-full bg-[#14b8a6] flex items-center justify-center text-[#0A0E17] font-bold text-xs shadow-md cursor-pointer"
             title="Settings"
           >
