@@ -299,18 +299,11 @@ function Users() {
 
             {fieldErrors.form && <p className="text-red-400 text-sm">{fieldErrors.form}</p>}
 
-            <div className="flex flex-col sm:flex-row justify-end gap-2 mt-3">
-              <button
-                type="button"
-                onClick={() => setShowForm(false)}
-                className="px-5 py-2 rounded border border-gray-600 text-textBody hover:border-accentTeal"
-              >
-                Cancel
-              </button>
-              <button type="submit" disabled={saving} className="btn-primary">
-                {saving ? "Saving..." : editingId ? "Save Changes" : "Add User"}
-              </button>
-            </div>
+            <div className="flex justify-end mt-3">
+  <button type="submit" disabled={saving} className="btn-primary">
+    {saving ? "Saving..." : editingId ? "Save Changes" : "Add User"}
+  </button>
+</div>
           </form>
         </div>
       )}
