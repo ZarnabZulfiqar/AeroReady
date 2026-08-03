@@ -14,7 +14,7 @@ function Users() {
   const [fieldErrors, setFieldErrors] = useState({});
   const [saving, setSaving] = useState(false);
 
-  const emptyUser = { name: "", email: "", password: "", role: "Operator", status: "Active" };
+  const emptyUser = { name: "", email: "", phone: "", password: "", role: "Operator", status: "Active" };
   const [newUser, setNewUser] = useState(emptyUser);
 
   function mapFromDb(row) {
@@ -22,8 +22,10 @@ function Users() {
       id: row.id,
       name: row.full_name,
       email: row.email,
+      phone: row.phone || "",
       role: row.role,
       status: row.status,
+      createdAt: row.created_at,
     };
   }
 
@@ -75,6 +77,14 @@ function Users() {
         errs.email = "A user with this email already exists.";
       }
     }
+    if (!newUser.phone) {
+      errs.phone = "Phone number is required.";
+    } else {
+      const phoneRegex = /^[0-9+\-\s()]{7,20}$/;
+      if (!phoneRegex.test(newUser.phone)) {
+        errs.phone = "Enter a valid phone number.";
+      }
+    }
     if (!editingId) {
       if (!newUser.password) {
         errs.password = "Password is required.";
@@ -102,6 +112,7 @@ function Users() {
         .from("profiles")
         .update({
           full_name: newUser.name,
+          phone: newUser.phone,
           role: newUser.role,
           status: newUser.status,
         })
@@ -119,6 +130,7 @@ function Users() {
           email: newUser.email,
           password: newUser.password,
           full_name: newUser.name,
+          phone: newUser.phone,
           role: newUser.role,
         },
         headers: {
@@ -209,8 +221,10 @@ function Users() {
               <tr className="text-textBody text-left">
                 <th className="pb-2 pr-4">Name</th>
                 <th className="pb-2 pr-4">Email</th>
+                <th className="pb-2 pr-4">Phone</th>
                 <th className="pb-2 pr-4">Role</th>
                 <th className="pb-2 pr-4">Status</th>
+                <th className="pb-2 pr-4">Added</th>
                 <th className="pb-2 text-right">Action</th>
               </tr>
             </thead>
@@ -219,11 +233,15 @@ function Users() {
                 <tr key={u.id} className="border-t border-gray-700">
                   <td className="py-3 pr-4 font-semibold">{u.name}</td>
                   <td className="py-3 pr-4 text-textBody">{u.email}</td>
+                  <td className="py-3 pr-4 text-textBody">{u.phone || "—"}</td>
                   <td className="py-3 pr-4">{u.role}</td>
                   <td className="py-3 pr-4">
                     <span className={`px-3 py-1 rounded-full text-xs font-semibold ${statusColor(u.status)}`}>
                       {u.status}
                     </span>
+                  </td>
+                  <td className="py-3 pr-4 text-textBody text-xs">
+                    {u.createdAt ? new Date(u.createdAt).toLocaleString() : "—"}
                   </td>
                   <td className="py-3 text-right whitespace-nowrap">
                     <button onClick={() => handleEdit(u)} className="text-accentTeal font-semibold mr-3">
@@ -277,6 +295,18 @@ function Users() {
                 className="w-full mt-1 p-2 rounded bg-bgDark border border-gray-700 text-white outline-none focus:border-accentTeal disabled:opacity-50"
               />
               {fieldErrors.email && <p className="text-red-400 text-xs mt-1">{fieldErrors.email}</p>}
+            </div>
+
+            <div>
+              <label className="text-textBody text-sm">Phone Number</label>
+              <input
+                type="tel"
+                placeholder="e.g. +92 300 1234567"
+                value={newUser.phone}
+                onChange={(e) => setNewUser({ ...newUser, phone: e.target.value })}
+                className="w-full mt-1 p-2 rounded bg-bgDark border border-gray-700 text-white outline-none focus:border-accentTeal"
+              />
+              {fieldErrors.phone && <p className="text-red-400 text-xs mt-1">{fieldErrors.phone}</p>}
             </div>
 
             {!editingId && (
