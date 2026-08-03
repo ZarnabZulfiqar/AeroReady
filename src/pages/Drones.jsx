@@ -287,9 +287,8 @@ function Drones() {
             No {filter === "All" ? "" : filter} Drones{filter === "All" ? " Found" : ""}
           </p>
         ) : (
-          // Horizontal scroll wrapper so only the table scrolls on mobile, not the whole page
           <div className="overflow-x-auto">
-            <table className="min-w-[650px]text-sm">
+            <table className="w-full text-sm">
               <thead>
                 <tr className="text-textBody text-left">
                   {selectMode && (
