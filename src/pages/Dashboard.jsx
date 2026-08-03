@@ -1,9 +1,11 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "../supabaseClient";
 
 const CYCLE_THRESHOLD = 150;
 
 function Dashboard() {
+  const navigate = useNavigate();
   const [missions, setMissions] = useState([]);
   const [approvals, setApprovals] = useState([]);
   const [stats, setStats] = useState({
@@ -43,7 +45,6 @@ function Dashboard() {
         .select("status");
       if (dronesError) throw dronesError;
 
-      // FR-014 / BR-012: need cycle_count too, not just health_status
       const { data: batteriesData, error: batteriesError } = await supabase
         .from("batteries")
         .select("health_status, cycle_count");
@@ -96,6 +97,45 @@ function Dashboard() {
     s === "Draft" ? "text-gray-400" :
     "text-orange-400";
 
+  // Har card ka apna target route
+  const statCards = [
+    {
+      key: "drones",
+      label: "Active Drones",
+      value: stats.activeDrones,
+      sub: `${stats.groundedDrones} grounded`,
+      path: "/drones",
+    },
+    {
+      key: "batteries",
+      label: "Batteries to Inspect",
+      value: stats.batteriesToInspect,
+      sub: `${stats.criticalBatteries} critical`,
+      path: "/batteries",
+    },
+    {
+      key: "missions",
+      label: "Upcoming Missions",
+      value: stats.upcomingMissions,
+      sub: stats.nextMissionDate ? `Next: ${stats.nextMissionDate}` : "No upcoming missions",
+      path: "/missions",
+    },
+    {
+      key: "maintenance",
+      label: "Open Maintenance Items",
+      value: stats.openMaintenance,
+      sub: `${stats.unresolvedCritical} unresolved critical`,
+      path: "/maintenance",
+    },
+    {
+      key: "approvals",
+      label: "Pending Approvals",
+      value: stats.pendingApprovals,
+      sub: `${stats.highRiskApprovals} high-risk`,
+      path: "/risk-approval",
+    },
+  ];
+
   return (
     <div className="w-full">
       <h1 className="text-2xl font-bold mb-4">Dashboard</h1>
@@ -112,44 +152,23 @@ function Dashboard() {
         </div>
       ) : (
         <>
-          {/* Stat cards: 1 column on mobile, 2 on small tablets, 5 on desktop */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
-            <div className="bg-cardDark p-4 rounded">
-              <p className="text-textBody text-sm">Active Drones</p>
-              <p className="text-2xl font-bold text-accentTeal">{stats.activeDrones}</p>
-              <p className="text-textBody text-xs mt-1">{stats.groundedDrones} grounded</p>
-            </div>
-            <div className="bg-cardDark p-4 rounded">
-              <p className="text-textBody text-sm">Batteries to Inspect</p>
-              <p className="text-2xl font-bold text-accentTeal">{stats.batteriesToInspect}</p>
-              <p className="text-textBody text-xs mt-1">{stats.criticalBatteries} critical</p>
-            </div>
-            <div className="bg-cardDark p-4 rounded">
-              <p className="text-textBody text-sm">Upcoming Missions</p>
-              <p className="text-2xl font-bold text-accentTeal">{stats.upcomingMissions}</p>
-              <p className="text-textBody text-xs mt-1">
-                {stats.nextMissionDate ? `Next: ${stats.nextMissionDate}` : "No upcoming missions"}
-              </p>
-            </div>
-            <div className="bg-cardDark p-4 rounded">
-              <p className="text-textBody text-sm">Open Maintenance Items</p>
-              <p className="text-2xl font-bold text-accentTeal">{stats.openMaintenance}</p>
-              <p className="text-textBody text-xs mt-1">{stats.unresolvedCritical} unresolved critical</p>
-            </div>
-            <div className="bg-cardDark p-4 rounded">
-              <p className="text-textBody text-sm">Pending Approvals</p>
-              <p className="text-2xl font-bold text-accentTeal">{stats.pendingApprovals}</p>
-              <p className="text-textBody text-xs mt-1">{stats.highRiskApprovals} high-risk</p>
-            </div>
+            {statCards.map((card) => (
+              <button
+                key={card.key}
+                onClick={() => navigate(card.path)}
+                className="bg-cardDark p-4 rounded text-left w-full hover:border hover:border-accentTeal transition-colors cursor-pointer"
+              >
+                <p className="text-textBody text-sm">{card.label}</p>
+                <p className="text-2xl font-bold text-accentTeal">{card.value}</p>
+                <p className="text-textBody text-xs mt-1">{card.sub}</p>
+              </button>
+            ))}
           </div>
 
-          {/* Tables: stacked on mobile, side-by-side on large screens */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <div className="bg-cardDark p-4 rounded">
               <h2 className="font-bold mb-3">Upcoming Missions</h2>
-              {/* No forced min-width, so a scrollbar only appears if the
-                  table genuinely doesn't fit — stays invisible on desktop
-                  when everything fits normally. */}
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
