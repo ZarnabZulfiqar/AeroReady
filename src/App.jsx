@@ -89,6 +89,42 @@ function ProtectedRoute({ children, allowedRoles }) {
 function AppLayout({ children }) {
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [initials, setInitials] = useState("");
+
+  useEffect(() => {
+    let active = true;
+
+    async function fetchInitials() {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user || !active) return;
+
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("full_name")
+        .eq("id", user.id)
+        .single();
+
+      const name = profile?.full_name || user.email || "";
+      const parts = name.trim().split(/\s+/).filter(Boolean);
+
+      let result = "?";
+      if (parts.length >= 2) {
+        result = (parts[0][0] + parts[1][0]).toUpperCase();
+      } else if (name.length > 0) {
+        result = name.slice(0, 2).toUpperCase();
+      }
+
+      if (active) setInitials(result);
+    }
+
+    fetchInitials();
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   async function handleLogout() {
     await supabase.auth.signOut();
@@ -117,7 +153,7 @@ function AppLayout({ children }) {
             className="w-8 h-8 rounded-full bg-[#14b8a6] flex items-center justify-center text-[#0A0E17] font-bold text-xs shadow-md cursor-pointer"
             title="Settings"
           >
-            ZA
+            {initials}
           </button>
         </header>
         <div className="flex-1 min-w-0 w-full px-4 md:px-8 pt-6 pb-8 overflow-y-auto">
