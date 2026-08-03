@@ -102,7 +102,7 @@ function AppLayout({ children }) {
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
       />
-      <main className="flex-1 min-h-screen flex flex-col bg-[#0A0E17] md:pl-64">
+      <main className="flex-1 min-w-0 min-h-screen flex flex-col bg-[#0A0E17] md:pl-64">
         <header className="h-14 w-full px-4 md:px-8 flex justify-between md:justify-end items-center gap-3 bg-[#0A0E17] border-b border-gray-800/80 shrink-0">
           <button
             type="button"
@@ -120,7 +120,7 @@ function AppLayout({ children }) {
             ZA
           </button>
         </header>
-        <div className="flex-1 w-full px-4 md:px-8 pt-6 pb-8 overflow-y-auto">
+        <div className="flex-1 min-w-0 w-full px-4 md:px-8 pt-6 pb-8 overflow-y-auto">
           {children}
         </div>
       </main>
