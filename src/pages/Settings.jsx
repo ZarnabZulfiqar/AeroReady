@@ -3,15 +3,19 @@ import { supabase } from "../supabaseClient";
 
 function Settings() {
   const [userId, setUserId] = useState(null);
-  const [originalEmail, setOriginalEmail] = useState(""); // re-auth ke liye asli email
+  const [originalEmail, setOriginalEmail] = useState("");
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [role, setRole] = useState("");
+  const [memberSince, setMemberSince] = useState(null);
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  // Preferences — UI-only for now, not wired to a backend column yet.
+  const [emailNotifications, setEmailNotifications] = useState(true);
 
   useEffect(() => {
     async function fetchProfile() {
@@ -26,13 +30,14 @@ function Settings() {
 
       const { data, error } = await supabase
         .from("profiles")
-        .select("full_name, role")
+        .select("full_name, role, created_at")
         .eq("id", user.id)
         .single();
 
       if (!error && data) {
         if (data.full_name) setFullName(data.full_name);
         if (data.role) setRole(data.role);
+        if (data.created_at) setMemberSince(data.created_at);
       }
     }
     fetchProfile();
@@ -59,11 +64,6 @@ function Settings() {
           return;
         }
 
-        // Re-authenticate before allowing a password change (SEC-AUTH practice —
-        // SRS doesn't define a specific FR/SEC ID for this, so no requirement
-        // number is cited here).
-        // originalEmail use karo, current `email` state nahi — agar email field
-        // edit ho chuki ho to bhi re-auth account ke ASLI (abhi confirmed) email se ho.
         const { error: signInError } = await supabase.auth.signInWithPassword({
           email: originalEmail,
           password: currentPassword,
@@ -86,7 +86,6 @@ function Settings() {
         }
       }
 
-      // Auth side: email change (Supabase confirmation email bhejega, turant apply nahi hota)
       const authUpdate = { data: { full_name: fullName } };
       if (emailChanged) authUpdate.email = email;
 
@@ -97,7 +96,6 @@ function Settings() {
         return;
       }
 
-      // profiles table bhi sync karo — Users.jsx aur Login.jsx isi table se full_name/role parhte hain
       if (userId) {
         const { error: profileError } = await supabase
           .from("profiles")
@@ -116,7 +114,6 @@ function Settings() {
         setError("");
         setSaved(true);
         setTimeout(() => setSaved(false), 2000);
-        // Note: naya email tab tak active nahi hoga jab tak confirmation link click na ho.
       } else {
         setSaved(true);
         setTimeout(() => setSaved(false), 2000);
@@ -134,70 +131,124 @@ function Settings() {
       <h1 className="text-2xl font-bold mb-6">Settings</h1>
 
       <div className="flex justify-center">
-        <form
-          onSubmit={handleSave}
-          className="bg-cardDark p-6 rounded-xl w-full max-w-md flex flex-col gap-4"
-        >
-          <div className="flex items-center justify-between">
+        <div className="w-full max-w-md flex flex-col gap-6">
+
+          {/* ===== Account Info (read-only) ===== */}
+          <div className="bg-cardDark p-6 rounded-xl flex flex-col gap-3">
+            <h2 className="text-lg font-bold">Account</h2>
+            <div className="flex items-center justify-between">
+              <span className="text-textBody text-sm">Role</span>
+              <span className="text-xs px-3 py-1 rounded-full bg-accentTeal/20 text-accentTeal font-semibold">
+                {role || "—"}
+              </span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-textBody text-sm">Member since</span>
+              <span className="text-sm text-white">
+                {memberSince ? new Date(memberSince).toLocaleDateString() : "—"}
+              </span>
+            </div>
+          </div>
+
+          {/* ===== Profile + Security (existing, working logic) ===== */}
+          <form
+            onSubmit={handleSave}
+            className="bg-cardDark p-6 rounded-xl flex flex-col gap-4"
+          >
             <h2 className="text-lg font-bold">Profile</h2>
-            <span className="text-xs px-3 py-1 rounded-full bg-accentTeal/20 text-accentTeal font-semibold">
-              {role}
-            </span>
+
+            <div>
+              <label className="text-textBody text-sm">Full name</label>
+              <input
+                type="text"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                className="w-full mt-1 p-2 rounded bg-bgDark border border-gray-700 text-white outline-none focus:border-accentTeal"
+              />
+            </div>
+
+            <div>
+              <label className="text-textBody text-sm">Email</label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full mt-1 p-2 rounded bg-bgDark border border-gray-700 text-white outline-none focus:border-accentTeal"
+              />
+              {email !== originalEmail && (
+                <p className="text-textBody text-xs mt-1">
+                  Changing this will send a confirmation link to the new address.
+                </p>
+              )}
+            </div>
+
+            <h2 className="text-lg font-bold mt-2">Security</h2>
+
+            <div>
+              <label className="text-textBody text-sm">Current password</label>
+              <input
+                type="password"
+                placeholder="Current password"
+                value={currentPassword}
+                onChange={(e) => setCurrentPassword(e.target.value)}
+                className="w-full mt-1 p-2 rounded bg-bgDark border border-gray-700 text-white outline-none focus:border-accentTeal"
+              />
+            </div>
+
+            <div>
+              <label className="text-textBody text-sm">New password</label>
+              <input
+                type="password"
+                placeholder="New password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                className="w-full mt-1 p-2 rounded bg-bgDark border border-gray-700 text-white outline-none focus:border-accentTeal"
+              />
+            </div>
+
+            {error && <p className="text-red-400 text-sm">{error}</p>}
+
+            <button type="submit" disabled={loading} className="btn-primary mt-2">
+              {loading ? "Saving..." : saved ? "Saved ✓" : "Save Changes"}
+            </button>
+          </form>
+
+          {/* ===== Preferences ===== */}
+          <div className="bg-cardDark p-6 rounded-xl flex flex-col gap-4">
+            <h2 className="text-lg font-bold">Preferences</h2>
+
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-white">Email notifications</p>
+                <p className="text-textBody text-xs">Get notified about mission approvals and maintenance alerts</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setEmailNotifications((v) => !v)}
+                className={`w-11 h-6 rounded-full transition-colors relative shrink-0 ${
+                  emailNotifications ? "bg-accentTeal" : "bg-gray-600"
+                }`}
+              >
+                <span
+                  className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white transition-transform ${
+                    emailNotifications ? "translate-x-5" : "translate-x-0"
+                  }`}
+                />
+              </button>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-white">Display</p>
+                <p className="text-textBody text-xs">Dark mode (default)</p>
+              </div>
+              <span className="text-xs px-3 py-1 rounded-full bg-gray-600/40 text-gray-300">
+                Dark
+              </span>
+            </div>
           </div>
 
-          <div>
-            <label className="text-textBody text-sm">Full name</label>
-            <input
-              type="text"
-              value={fullName}
-              onChange={(e) => setFullName(e.target.value)}
-              className="w-full mt-1 p-2 rounded bg-bgDark border border-gray-700 text-white outline-none focus:border-accentTeal"
-            />
-          </div>
-
-          <div>
-            <label className="text-textBody text-sm">Email</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full mt-1 p-2 rounded bg-bgDark border border-gray-700 text-white outline-none focus:border-accentTeal"
-            />
-            {email !== originalEmail && (
-              <p className="text-textBody text-xs mt-1">
-                Changing this will send a confirmation link to the new address.
-              </p>
-            )}
-          </div>
-
-          <div>
-            <label className="text-textBody text-sm">Current password</label>
-            <input
-              type="password"
-              placeholder="Current password"
-              value={currentPassword}
-              onChange={(e) => setCurrentPassword(e.target.value)}
-              className="w-full mt-1 p-2 rounded bg-bgDark border border-gray-700 text-white outline-none focus:border-accentTeal"
-            />
-          </div>
-
-          <div>
-            <label className="text-textBody text-sm">New password</label>
-            <input
-              type="password"
-              placeholder="New password"
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              className="w-full mt-1 p-2 rounded bg-bgDark border border-gray-700 text-white outline-none focus:border-accentTeal"
-            />
-          </div>
-
-          {error && <p className="text-red-400 text-sm">{error}</p>}
-
-          <button type="submit" disabled={loading} className="btn-primary mt-2">
-            {loading ? "Saving..." : saved ? "Saved ✓" : "Save Changes"}
-          </button>
-        </form>
+        </div>
       </div>
     </div>
   );
