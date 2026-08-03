@@ -59,6 +59,41 @@ function RiskApproval() {
     setRemark("");
   }, [selectedMissionId]);
 
+  // Sends the approval/rejection result to the Operator who submitted the mission
+  async function notifyOperator(missionData, decision, rejectionRemark) {
+    try {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("email")
+        .eq("full_name", missionData.submittedBy)
+        .single();
+
+      if (!profile?.email) return;
+
+      const { data: sessionData } = await supabase.auth.getSession();
+
+      const subject =
+        decision === "approved"
+          ? `Mission Approved: ${missionData.name}`
+          : `Mission Rejected: ${missionData.name}`;
+
+      const message =
+        decision === "approved"
+          ? `Your mission "${missionData.name}" has been approved and is ready to proceed.`
+          : `Your mission "${missionData.name}" has been rejected. Remark: ${rejectionRemark}`;
+
+      await supabase.functions.invoke("send-notification", {
+        body: { to: profile.email, subject, message },
+        headers: {
+          Authorization: `Bearer ${sessionData?.session?.access_token || ""}`,
+        },
+      });
+    } catch (e) {
+      // Notification failure should not block the approval flow itself
+      console.error("Failed to send operator notification:", e);
+    }
+  }
+
   if (loading) {
     return <p className="text-textBody text-center py-8">Loading missions...</p>;
   }
@@ -92,24 +127,17 @@ function RiskApproval() {
       ? "bg-yellow-400"
       : "bg-accentTeal";
 
-  // AC-010: High-risk mission blocked until the underlying condition is corrected,
-  // alag se critical checklist item fail hone se bhi block hota hai
   const isHighRiskBlocked = mission.riskLevel === "High";
   const isBlocked = mission.blockingReasons.length > 0 || isHighRiskBlocked;
 
-  // Fix: mission list already only contains undecided (Pending Approval) missions,
-  // so decision === "rejected" never happens here. Warning ab reject-intent
-  // (undecided + empty remark) ke waqt dikhna chahiye, decision ke baad nahi.
   const requiresRemark = mission.decision === null && !remark.trim();
 
-  // BR-011: ek baar decision record ho jaye to wo edit/remove nahi ho sakta
   const isLocked = mission.decision !== null;
 
   async function handleApprove() {
     if (isBlocked || isLocked) return;
     setSaving(true);
 
-    // TODO: replace with actual logged-in user once shared Auth Context exists
     const decidedBy = "Zarnab A. (Administrator)";
 
     const { error } = await supabase
@@ -125,6 +153,7 @@ function RiskApproval() {
     if (error) {
       setError("Failed to save decision. " + error.message);
     } else {
+      await notifyOperator(mission, "approved");
       fetchMissions();
     }
     setSaving(false);
@@ -134,7 +163,6 @@ function RiskApproval() {
     if (isLocked || !remark.trim()) return;
     setSaving(true);
 
-    // TODO: replace with actual logged-in user once shared Auth Context exists
     const decidedBy = "Zarnab A. (Administrator)";
 
     const { error } = await supabase
@@ -150,6 +178,7 @@ function RiskApproval() {
     if (error) {
       setError("Failed to save decision. " + error.message);
     } else {
+      await notifyOperator(mission, "rejected", remark);
       fetchMissions();
     }
     setSaving(false);
@@ -157,7 +186,6 @@ function RiskApproval() {
 
   return (
     <div className="w-full">
-      {/* Header: title stacks above the mission-picker dropdown on mobile */}
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-6">
         <div>
           <h1 className="text-2xl font-bold mb-1">{mission.name} — Risk Result</h1>

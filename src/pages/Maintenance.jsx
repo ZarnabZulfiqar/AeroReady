@@ -36,8 +36,6 @@ function Maintenance() {
     return "other";
   }
 
-  // FR-035 / FR-037: update the asset's own status (drones.status or
-  // batteries.health_status-adjacent status) when a fault is logged/resolved
   async function updateAssetStatus(assetType, assetId, status) {
     if (assetType === "drone") {
       const { error } = await supabase.from("drones").update({ status }).eq("drone_id", assetId);
@@ -47,6 +45,38 @@ function Maintenance() {
       if (error) return error;
     }
     return null;
+  }
+
+  // Notifies all active Technicians when a new unresolved fault is logged
+  async function notifyTechnicians(issue) {
+    try {
+      const { data: technicians } = await supabase
+        .from("profiles")
+        .select("email")
+        .eq("role", "Technician")
+        .eq("status", "Active");
+
+      if (!technicians || technicians.length === 0) return;
+
+      const emails = technicians.map((t) => t.email).filter(Boolean);
+      if (emails.length === 0) return;
+
+      const { data: sessionData } = await supabase.auth.getSession();
+
+      await supabase.functions.invoke("send-notification", {
+        body: {
+          to: emails,
+          subject: `New ${issue.severity} Priority Issue: ${issue.asset}`,
+          message: `A new issue has been reported on ${issue.asset}. Type: ${issue.issueType}. Severity: ${issue.severity}.`,
+        },
+        headers: {
+          Authorization: `Bearer ${sessionData?.session?.access_token || ""}`,
+        },
+      });
+    } catch (e) {
+      // Notification failure should not block the issue-report flow itself
+      console.error("Failed to send technician notification:", e);
+    }
   }
 
   function mapFromDb(row) {
@@ -151,7 +181,6 @@ function Maintenance() {
           return;
         }
 
-        // FR-037 / BR-008: reinstate asset to Available once issue is Resolved
         const statusError = await updateAssetStatus(assetType, newIssue.asset, "Available");
         if (statusError) {
           setFieldErrors({ form: "Resolution saved but failed to reinstate asset status. " + statusError.message });
@@ -176,8 +205,6 @@ function Maintenance() {
         return;
       }
 
-      // FR-035 / BR-007: set affected asset to Maintenance when a new
-      // unresolved issue is logged against it
       if (newIssue.status !== "Resolved") {
         const statusError = await updateAssetStatus(assetType, newIssue.asset, "Maintenance");
         if (statusError) {
@@ -185,6 +212,8 @@ function Maintenance() {
           setSaving(false);
           return;
         }
+
+        await notifyTechnicians(newIssue);
       }
     }
 
@@ -204,7 +233,6 @@ function Maintenance() {
 
   return (
     <div className="w-full">
-      {/* Header row: stacks on mobile, side-by-side on larger screens */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
         <h1 className="text-2xl font-bold">Maintenance</h1>
         <button
@@ -246,8 +274,6 @@ function Maintenance() {
         ))}
       </div>
 
-      {/* No forced min-width, so a scrollbar only appears when content
-          genuinely doesn't fit — stays invisible on desktop otherwise */}
       <div className="bg-cardDark p-4 rounded overflow-x-auto">
         {loading ? (
           <p className="text-textBody text-center py-8">Loading issues...</p>
@@ -313,7 +339,6 @@ function Maintenance() {
               {editingId ? "Edit Issue" : "Report New Issue"}
             </h2>
 
-            {/* Form fields: 1 column on mobile, 2 columns from small screens up */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="text-textBody text-sm">Issue ID</label>
