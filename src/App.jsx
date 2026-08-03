@@ -115,7 +115,7 @@ function AppLayout({ children }) {
           <button
             onClick={handleLogout}
             className="w-8 h-8 rounded-full bg-[#14b8a6] flex items-center justify-center text-[#0A0E17] font-bold text-xs shadow-md cursor-pointer"
-            title="Setting"
+            title="Settings"
           >
             ZA
           </button>
