@@ -52,7 +52,7 @@ function Users() {
   }, []);
 
   const statusColor = (s) =>
-    s === "Active" ? "bg-accentTeal/20 text-accentTeal" : "bg-gray-500/20 text-gray-300";
+    s === "Active" ? "bg-accentTeal/20 text-accentTeal" : "bg-red-500/20 text-red-400";
 
   const activeCount = users.filter((u) => u.status === "Active").length;
   const deactivatedCount = users.filter((u) => u.status === "Deactivated").length;
