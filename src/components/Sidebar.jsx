@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { supabase } from "../supabaseClient"; // apna actual path yahan set karein
+import { useAuth } from "../context/AuthContext";
 import {
   LayoutDashboard,
   Plane,
@@ -40,8 +40,9 @@ function Sidebar({ onLogout, isOpen = false, onClose = () => {} }) {
   const location = useLocation();
   const currentPath = location.pathname;
 
-  const [role, setRole] = useState(null);
-  const [roleLoading, setRoleLoading] = useState(true);
+  // Role ab AuthContext se aa raha hai — Sidebar apna alag fetch nahi karta
+  const { profile, loading: roleLoading } = useAuth();
+  const role = profile?.role ?? null;
 
   const isChecklistRelated =
     currentPath === "/checklist-templates" || currentPath.startsWith("/checklists/");
@@ -50,58 +51,6 @@ function Sidebar({ onLogout, isOpen = false, onClose = () => {} }) {
     onClose();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPath]);
-
-  useEffect(() => {
-    let isMounted = true;
-
-    async function fetchRole() {
-      try {
-        const {
-          data: { session },
-        } = await supabase.auth.getSession();
-
-        if (!session?.user) {
-          if (isMounted) {
-            setRole(null);
-            setRoleLoading(false);
-          }
-          return;
-        }
-
-        const { data, error } = await supabase
-          .from("profiles")
-          .select("role")
-          .eq("id", session.user.id)
-          .single();
-
-        if (error) {
-          console.error("Sidebar: failed to fetch user role", error);
-        }
-
-        if (isMounted) {
-          setRole(data?.role ?? null);
-          setRoleLoading(false);
-        }
-      } catch (err) {
-        console.error("Sidebar: unexpected error fetching role", err);
-        if (isMounted) {
-          setRole(null);
-          setRoleLoading(false);
-        }
-      }
-    }
-
-    fetchRole();
-
-    const { data: authListener } = supabase.auth.onAuthStateChange(() => {
-      fetchRole();
-    });
-
-    return () => {
-      isMounted = false;
-      authListener?.subscription?.unsubscribe();
-    };
-  }, []);
 
   // roles undefined = everyone; jab tak role load ho raha hai, restricted items hide (fail-closed)
   const filterByRole = (items) =>
