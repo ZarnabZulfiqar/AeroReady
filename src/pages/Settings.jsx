@@ -277,7 +277,7 @@ function Settings() {
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-textBody text-sm">Last login</span>
+                  <span className="text-textBody text-sm">Logged in at</span>
                   <span className="text-sm text-white">
                     {lastSignIn ? new Date(lastSignIn).toLocaleString() : "—"}
                   </span>
