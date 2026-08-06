@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Pencil, Ban, RotateCcw, X, AlertTriangle } from "lucide-react";
 import { supabase } from "../supabaseClient";
+import { SkeletonTable } from "../components/Skeleton";
 
 // FR-014 / BR-012: configured threshold — currently a constant, move to
 // Settings/config table once needed so Administrator can adjust it.
@@ -307,9 +308,9 @@ function Batteries() {
           if the content genuinely doesn't fit — stays invisible on
           desktop when everything fits normally. */}
       <div className="bg-cardDark p-4 rounded overflow-x-auto">
-        {loading ? (
-          <p className="text-textBody text-center py-8">Loading batteries...</p>
-        ) : filteredBatteries.length === 0 ? (
+     {loading ? (
+  <SkeletonTable rows={6} columns={8} />
+) : filteredBatteries.length === 0 ? (
           <p className="text-textBody text-center py-8">
             No {filter === "All" ? "" : filter} Batteries{filter === "All" ? " Found" : ""}
           </p>

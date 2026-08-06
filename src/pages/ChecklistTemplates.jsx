@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Pencil, RotateCcw, X } from "lucide-react";
 import { supabase } from "../supabaseClient";
+import { SkeletonTable } from "../components/Skeleton";
 
 function ChecklistTemplates() {
   const [items, setItems] = useState([]);
@@ -293,9 +294,9 @@ function ChecklistTemplates() {
       </div>
 
       <div className="bg-cardDark p-4 rounded overflow-x-auto">
-        {loading ? (
-          <p className="text-textBody text-center py-8">Loading checklist items...</p>
-        ) : filteredItems.length === 0 ? (
+    {loading ? (
+  <SkeletonTable rows={6} columns={7} />
+) : filteredItems.length === 0 ? (
           <p className="text-textBody text-center py-8">
             No {filter === "All" ? "" : filter} Items{filter === "All" ? " Found" : ""}
           </p>

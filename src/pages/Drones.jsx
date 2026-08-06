@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Pencil, Ban, RotateCcw, X } from "lucide-react";
 import { supabase } from "../supabaseClient";
+import { SkeletonTable } from "../components/Skeleton";
 
 function Drones() {
   const [drones, setDrones] = useState([]);
@@ -280,9 +281,9 @@ function Drones() {
       </div>
 
       <div className="bg-cardDark p-4 rounded">
-        {loading ? (
-          <p className="text-textBody text-center py-8">Loading drones...</p>
-        ) : filteredDrones.length === 0 ? (
+     {loading ? (
+  <SkeletonTable rows={6} columns={6} />
+) : filteredDrones.length === 0 ? (
           <p className="text-textBody text-center py-8">
             No {filter === "All" ? "" : filter} Drones{filter === "All" ? " Found" : ""}
           </p>

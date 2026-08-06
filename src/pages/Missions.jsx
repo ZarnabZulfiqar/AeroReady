@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Pencil, Trash2, X, ClipboardCheck } from "lucide-react";
 import { supabase } from "../supabaseClient";
+import { SkeletonCards, SkeletonTable } from "../components/Skeleton";
 
 // FR-016 / BR-003: minimum safe charge threshold — constant for now,
 // move to Settings/config table once Administrator needs to adjust it.
@@ -310,9 +311,9 @@ function Missions() {
       {/* No forced min-width, so a scrollbar only appears when content
           genuinely doesn't fit — stays invisible on desktop otherwise */}
       <div className="bg-cardDark p-4 rounded overflow-x-auto">
-        {loading ? (
-          <p className="text-textBody text-center py-8">Loading missions...</p>
-        ) : filteredMissions.length === 0 ? (
+      {loading ? (
+  <SkeletonTable rows={6} columns={9} />
+) : filteredMissions.length === 0 ? (
           <p className="text-textBody text-center py-8">No {filter === "All" ? "" : filter} Missions{filter === "All" ? " Found" : ""}</p>
         ) : (
           <table className="w-full text-sm">

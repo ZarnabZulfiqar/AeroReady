@@ -3,6 +3,7 @@ import { Search, Download } from "lucide-react";
 import { supabase } from "../supabaseClient";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import { SkeletonTable } from "../components/Skeleton";
 
 // Columns jo report mein nahi dikhani (internal/technical fields)
 const HIDDEN_FIELDS = ["id", "created_at", "updated_at", "user_id"];
@@ -361,9 +362,9 @@ function Reports() {
       {error && <p className="text-red-400 text-sm mb-3">{error}</p>}
 
       <div className="bg-cardDark p-4 rounded overflow-x-auto">
-        {loading ? (
-          <p className="text-textBody text-center py-8">Loading reports...</p>
-        ) : filteredReports.length === 0 ? (
+   {loading ? (
+  <SkeletonTable rows={5} columns={6} />
+) : filteredReports.length === 0 ? (
           <p className="text-textBody text-center py-8">No Reports Found</p>
         ) : (
           <table className="w-full text-sm">

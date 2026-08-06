@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Search } from "lucide-react";
 import { supabase } from "../supabaseClient";
+import { SkeletonTable } from "../components/Skeleton";
 
 function Users() {
   const [users, setUsers] = useState([]);
@@ -228,8 +229,8 @@ function Users() {
 
       <div className="bg-cardDark p-4 rounded overflow-x-auto">
         {loading ? (
-          <p className="text-textBody text-center py-8">Loading users...</p>
-        ) : filteredUsers.length === 0 ? (
+  <SkeletonTable rows={5} columns={7} />
+) : filteredUsers.length === 0 ? (
           <p className="text-textBody text-center py-8">No Users Found</p>
         ) : (
           <table className="w-full text-sm">

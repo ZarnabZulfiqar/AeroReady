@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Search } from "lucide-react";
 import { supabase } from "../supabaseClient";
+import { SkeletonTable } from "../components/Skeleton";
 
 function Traceability() {
   const [search, setSearch] = useState("");
@@ -187,9 +188,9 @@ function Traceability() {
       {error && <p className="text-red-400 text-sm mb-3">{error}</p>}
 
       <div className="bg-cardDark p-4 rounded overflow-x-auto">
-        {loading ? (
-          <p className="text-textBody text-center py-8">Loading records...</p>
-        ) : filteredRecords.length === 0 ? (
+       {loading ? (
+  <SkeletonTable rows={6} columns={5} />
+) : filteredRecords.length === 0 ? (
           <p className="text-textBody text-center py-8">No Records Found</p>
         ) : (
           <table className="w-full text-sm">

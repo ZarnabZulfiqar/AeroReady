@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../supabaseClient";
+import { SkeletonCards, SkeletonTable } from "../components/Skeleton";
 
 const CYCLE_THRESHOLD = 150;
 
@@ -147,10 +148,16 @@ function Dashboard() {
       )}
 
       {loading ? (
-        <div className="flex items-center justify-center h-64 text-textBody">
-          Loading dashboard data...
-        </div>
-      ) : (
+  <>
+    <div className="mb-6">
+      <SkeletonCards count={5} />
+    </div>
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <SkeletonTable rows={4} columns={4} />
+      <SkeletonTable rows={4} columns={4} />
+    </div>
+  </>
+) : (
         <>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
             {statCards.map((card) => (
