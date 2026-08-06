@@ -26,6 +26,7 @@ function Users() {
       role: row.role,
       status: row.status,
       createdAt: row.created_at,
+      deactivationRequested: row.deactivation_requested || false,
     };
   }
 
@@ -159,6 +160,21 @@ function Users() {
     setShowForm(true);
   }
 
+  async function handleApproveDeactivation(user) {
+    if (!window.confirm(`Deactivate ${user.name}'s account?`)) return;
+
+    const { error } = await supabase
+      .from("profiles")
+      .update({ status: "Deactivated", deactivation_requested: false })
+      .eq("id", user.id);
+
+    if (error) {
+      setError("Failed to deactivate user. " + error.message);
+    } else {
+      fetchUsers();
+    }
+  }
+
   return (
     <div className="w-full">
       <h1 className="text-2xl font-bold mb-4">Users & Roles</h1>
@@ -239,6 +255,11 @@ function Users() {
                     <span className={`px-3 py-1 rounded-full text-xs font-semibold ${statusColor(u.status)}`}>
                       {u.status}
                     </span>
+                    {u.deactivationRequested && (
+                      <span className="ml-2 px-2 py-1 rounded-full text-xs font-semibold bg-red-500/20 text-red-400">
+                        Deactivation Requested
+                      </span>
+                    )}
                   </td>
                   <td className="py-3 pr-4 text-textBody text-xs">
                     {u.createdAt ? new Date(u.createdAt).toLocaleString() : "—"}
@@ -247,6 +268,14 @@ function Users() {
                     <button onClick={() => handleEdit(u)} className="text-accentTeal font-semibold mr-3">
                       Edit
                     </button>
+                    {u.deactivationRequested && (
+                      <button
+                        onClick={() => handleApproveDeactivation(u)}
+                        className="text-red-400 font-semibold"
+                      >
+                        Approve Deactivation
+                      </button>
+                    )}
                   </td>
                 </tr>
               ))}

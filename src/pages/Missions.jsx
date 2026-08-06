@@ -125,62 +125,61 @@ function Missions() {
     return matchesSearch && matchesFilter;
   });
 
-  async function handleSaveMission(e) {
-    e.preventDefault();
-    setFieldErrors({});
+ async function handleSaveMission(e) {
+  e.preventDefault();
+  setFieldErrors({});
 
-    if (!newMission.id || !newMission.name || !newMission.droneId || !newMission.batteryId || !newMission.pilot || !newMission.date) {
-      setFieldErrors({ form: "Please fill in all required fields." });
-      return;
-    }
-
-    if (!editingId) {
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const selectedDate = new Date(newMission.date);
-      if (selectedDate < today) {
-        setFieldErrors({ date: "Mission date cannot be in the past." });
-        return;
-      }
-    }
-
-    setSaving(true);
-
-    const payload = {
-      name: newMission.name,
-      location: newMission.location,
-      scheduled_date: newMission.date,
-      duration_minutes: newMission.duration === "" ? null : Number(newMission.duration),
-      payload_required: newMission.payloadRequired,
-      status: newMission.status,
-      drone_id: newMission.droneId,
-      battery_id: newMission.batteryId,
-      pilot: newMission.pilot,
-    };
-
-    if (editingId) {
-      const { error } = await supabase.from("missions").update(payload).eq("id", editingId);
-      if (error) {
-        setFieldErrors({ form: "Failed to save changes. " + error.message });
-        setSaving(false);
-        return;
-      }
-    } else {
-      const { error } = await supabase.from("missions").insert({ id: newMission.id, ...payload });
-      if (error) {
-        setFieldErrors({ form: "Failed to add mission. " + error.message });
-        setSaving(false);
-        return;
-      }
-    }
-
-    setSaving(false);
-    setNewMission(emptyMission);
-    setEditingId(null);
-    setShowForm(false);
-    fetchMissions();
+  if (!newMission.id || !newMission.name || !newMission.droneId || !newMission.batteryId || !newMission.pilot || !newMission.date) {
+    setFieldErrors({ form: "Please fill in all required fields." });
+    return;
   }
 
+  if (!editingId) {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const selectedDate = new Date(newMission.date);
+    if (selectedDate < today) {
+      setFieldErrors({ date: "Mission date cannot be in the past." });
+      return;
+    }
+  }
+
+  setSaving(true);
+
+  const payload = {
+    name: newMission.name,
+    location: newMission.location,
+    scheduled_date: newMission.date,
+    duration_minutes: newMission.duration === "" ? null : Number(newMission.duration),
+    payload_required: newMission.payloadRequired,
+    status: newMission.status,
+    drone_id: newMission.droneId,
+    battery_id: newMission.batteryId,
+    pilot: newMission.pilot,
+  };
+
+  if (editingId) {
+    const { error } = await supabase.from("missions").update(payload).eq("id", editingId);
+    if (error) {
+      setFieldErrors({ form: "Failed to save changes. " + error.message });
+      setSaving(false);
+      return;
+    }
+  } else {
+    const { error } = await supabase.from("missions").insert({ id: newMission.id, ...payload });
+    if (error) {
+      setFieldErrors({ form: "Failed to add mission. " + error.message });
+      setSaving(false);
+      return;
+    }
+  }
+
+  setSaving(false);
+  setNewMission(emptyMission);
+  setEditingId(null);
+  setShowForm(false);
+  fetchMissions();
+}
   function handleEdit(mission) {
     setNewMission(mission);
     setEditingId(mission.id);

@@ -14,8 +14,11 @@ function Maintenance() {
   const [fieldErrors, setFieldErrors] = useState({});
   const [saving, setSaving] = useState(false);
 
+  const [currentUserId, setCurrentUserId] = useState(null);
+  const [currentUserRole, setCurrentUserRole] = useState(null);
+
   const emptyIssue = {
-    id: "", asset: "", issueType: "", severity: "Medium", reportedBy: "", status: "Open",
+    id: "", asset: "", issueType: "", severity: "Medium", status: "Open",
     actionTaken: "", inspectionOutcome: "", nextDueDate: "", closureRemarks: "",
   };
   const [newIssue, setNewIssue] = useState(emptyIssue);
@@ -47,37 +50,22 @@ function Maintenance() {
     return null;
   }
 
-  // Notifies all active Technicians when a new unresolved fault is logged
-  async function notifyTechnicians(issue) {
-    try {
-      const { data: technicians } = await supabase
+  useEffect(() => {
+    async function fetchCurrentUser() {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      setCurrentUserId(user.id);
+
+      const { data: profile } = await supabase
         .from("profiles")
-        .select("email")
-        .eq("role", "Technician")
-        .eq("status", "Active");
+        .select("role")
+        .eq("id", user.id)
+        .single();
 
-      if (!technicians || technicians.length === 0) return;
-
-      const emails = technicians.map((t) => t.email).filter(Boolean);
-      if (emails.length === 0) return;
-
-      const { data: sessionData } = await supabase.auth.getSession();
-
-      await supabase.functions.invoke("send-notification", {
-        body: {
-          to: emails,
-          subject: `New ${issue.severity} Priority Issue: ${issue.asset}`,
-          message: `A new issue has been reported on ${issue.asset}. Type: ${issue.issueType}. Severity: ${issue.severity}.`,
-        },
-        headers: {
-          Authorization: `Bearer ${sessionData?.session?.access_token || ""}`,
-        },
-      });
-    } catch (e) {
-      // Notification failure should not block the issue-report flow itself
-      console.error("Failed to send technician notification:", e);
+      if (profile) setCurrentUserRole(profile.role);
     }
-  }
+    fetchCurrentUser();
+  }, []);
 
   function mapFromDb(row) {
     const record = Array.isArray(row.maintenance_records) && row.maintenance_records.length > 0
@@ -88,7 +76,7 @@ function Maintenance() {
       asset: row.asset_id,
       issueType: row.fault_type || "",
       severity: row.severity,
-      reportedBy: row.reported_by || "",
+      reportedBy: row.reporter?.full_name || "—",
       status: row.status,
       actionTaken: record?.action_taken || "",
       inspectionOutcome: record?.inspection_outcome || "",
@@ -102,7 +90,7 @@ function Maintenance() {
     setError("");
     const { data, error } = await supabase
       .from("fault_reports")
-      .select("*, maintenance_records(*)")
+      .select("*, maintenance_records(*), reporter:profiles!reported_by(full_name)")
       .order("reported_at", { ascending: true });
 
     if (error) {
@@ -135,6 +123,11 @@ function Maintenance() {
       return;
     }
 
+    if (newIssue.status === "Resolved" && currentUserRole !== "Technician") {
+      setFieldErrors({ form: "Only a Technician can mark an issue as Resolved." });
+      return;
+    }
+
     if (newIssue.status === "Resolved") {
       if (!newIssue.actionTaken || !newIssue.inspectionOutcome || !newIssue.nextDueDate) {
         setFieldErrors({ form: "Action taken, inspection outcome and next due date are required to mark an issue Resolved." });
@@ -153,7 +146,6 @@ function Maintenance() {
           asset_id: newIssue.asset,
           fault_type: newIssue.issueType,
           severity: newIssue.severity,
-          reported_by: newIssue.reportedBy,
           status: newIssue.status,
         })
         .eq("fault_id", editingId);
@@ -171,6 +163,7 @@ function Maintenance() {
           asset_type: assetType,
           asset_id: newIssue.asset,
           action_taken: newIssue.actionTaken,
+          technician_id: currentUserId,
           inspection_outcome: newIssue.inspectionOutcome,
           next_due_date: newIssue.nextDueDate,
           closure_remarks: newIssue.closureRemarks,
@@ -195,7 +188,7 @@ function Maintenance() {
         asset_id: newIssue.asset,
         fault_type: newIssue.issueType,
         severity: newIssue.severity,
-        reported_by: newIssue.reportedBy,
+        reported_by: currentUserId,
         status: newIssue.status,
       });
 
@@ -212,8 +205,6 @@ function Maintenance() {
           setSaving(false);
           return;
         }
-
-        await notifyTechnicians(newIssue);
       }
     }
 
@@ -385,16 +376,6 @@ function Maintenance() {
               </div>
 
               <div>
-                <label className="text-textBody text-sm">Reported By</label>
-                <input
-                  placeholder="e.g. H. Raza"
-                  value={newIssue.reportedBy}
-                  onChange={(e) => setNewIssue({ ...newIssue, reportedBy: e.target.value })}
-                  className="w-full mt-1 p-2 rounded bg-bgDark border border-gray-700 text-white outline-none focus:border-accentTeal"
-                />
-              </div>
-
-              <div>
                 <label className="text-textBody text-sm">Status</label>
                 <select
                   value={newIssue.status}
@@ -402,12 +383,12 @@ function Maintenance() {
                   className="w-full mt-1 p-2 rounded bg-bgDark border border-gray-700 text-white outline-none focus:border-accentTeal"
                 >
                   <option>Open</option>
-                  <option>Resolved</option>
+                  {currentUserRole === "Technician" && <option>Resolved</option>}
                 </select>
               </div>
             </div>
 
-            {newIssue.status === "Resolved" && (
+            {newIssue.status === "Resolved" && currentUserRole === "Technician" && (
               <div className="border-t border-gray-700 pt-4 flex flex-col gap-4">
                 <p className="text-textBody text-xs font-semibold">Resolution details (required)</p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

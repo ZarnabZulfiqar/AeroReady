@@ -59,41 +59,6 @@ function RiskApproval() {
     setRemark("");
   }, [selectedMissionId]);
 
-  // Sends the approval/rejection result to the Operator who submitted the mission
-  async function notifyOperator(missionData, decision, rejectionRemark) {
-    try {
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("email")
-        .eq("full_name", missionData.submittedBy)
-        .single();
-
-      if (!profile?.email) return;
-
-      const { data: sessionData } = await supabase.auth.getSession();
-
-      const subject =
-        decision === "approved"
-          ? `Mission Approved: ${missionData.name}`
-          : `Mission Rejected: ${missionData.name}`;
-
-      const message =
-        decision === "approved"
-          ? `Your mission "${missionData.name}" has been approved and is ready to proceed.`
-          : `Your mission "${missionData.name}" has been rejected. Remark: ${rejectionRemark}`;
-
-      await supabase.functions.invoke("send-notification", {
-        body: { to: profile.email, subject, message },
-        headers: {
-          Authorization: `Bearer ${sessionData?.session?.access_token || ""}`,
-        },
-      });
-    } catch (e) {
-      // Notification failure should not block the approval flow itself
-      console.error("Failed to send operator notification:", e);
-    }
-  }
-
   if (loading) {
     return <p className="text-textBody text-center py-8">Loading missions...</p>;
   }
@@ -153,7 +118,6 @@ function RiskApproval() {
     if (error) {
       setError("Failed to save decision. " + error.message);
     } else {
-      await notifyOperator(mission, "approved");
       fetchMissions();
     }
     setSaving(false);
@@ -178,7 +142,6 @@ function RiskApproval() {
     if (error) {
       setError("Failed to save decision. " + error.message);
     } else {
-      await notifyOperator(mission, "rejected", remark);
       fetchMissions();
     }
     setSaving(false);
