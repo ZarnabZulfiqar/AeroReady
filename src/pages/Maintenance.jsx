@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Pencil } from "lucide-react";
 import { supabase } from "../supabaseClient";
+import { SkeletonTable } from "../components/Skeleton";
 
 function Maintenance() {
   const [issues, setIssues] = useState([]);
@@ -267,8 +268,8 @@ function Maintenance() {
 
       <div className="bg-cardDark p-4 rounded overflow-x-auto">
         {loading ? (
-          <p className="text-textBody text-center py-8">Loading issues...</p>
-        ) : filteredIssues.length === 0 ? (
+  <SkeletonTable rows={5} columns={6} />
+) : filteredIssues.length === 0 ? (
           <p className="text-textBody text-center py-8">
             No {filter === "All" ? "" : filter} Issues{filter === "All" ? " Found" : ""}
           </p>
