@@ -110,22 +110,39 @@ function Users() {
 
     setSaving(true);
 
-    if (editingId) {
-      const { error } = await supabase
-        .from("profiles")
-        .update({
-          full_name: newUser.name,
-          phone: newUser.phone,
-          role: newUser.role,
-          status: newUser.status,
-        })
-        .eq("id", editingId);
+ if (editingId) {
+  const { error } = await supabase
+    .from("profiles")
+    .update({
+      full_name: newUser.name,
+      phone: newUser.phone,
+      role: newUser.role,
+      status: newUser.status,
+    })
+    .eq("id", editingId);
 
-      if (error) {
-        setFieldErrors({ form: "Failed to save changes. " + error.message });
-        setSaving(false);
-        return;
-      }
+  if (error) {
+    setFieldErrors({ form: "Failed to save changes. " + error.message });
+    setSaving(false);
+    return;
+  }
+
+  if (newUser.password) {
+    const { data: sessionData } = await supabase.auth.getSession();
+    const { data, error: pwError } = await supabase.functions.invoke("admin-update-password", {
+      body: { userId: editingId, newPassword: newUser.password },
+      headers: {
+        Authorization: `Bearer ${sessionData?.session?.access_token || ""}`,
+      },
+    });
+
+    if (pwError || data?.error) {
+      setFieldErrors({ form: "Profile saved, but password change failed. " + (data?.error || pwError.message) });
+      setSaving(false);
+      return;
+    }
+  }
+
     } else {
       const { data: sessionData } = await supabase.auth.getSession();
       const { data, error } = await supabase.functions.invoke("create-user", {
@@ -162,21 +179,20 @@ function Users() {
     setShowForm(true);
   }
 
-  async function handleApproveDeactivation(user) {
-    if (!window.confirm(`Deactivate ${user.name}'s account?`)) return;
+ async function handleRejectDeactivation(user) {
+  if (!window.confirm(`Reject ${user.name}'s deactivation request? Account will remain Active.`)) return;
 
-    const { error } = await supabase
-      .from("profiles")
-      .update({ status: "Deactivated", deactivation_requested: false })
-      .eq("id", user.id);
+  const { error } = await supabase
+    .from("profiles")
+    .update({ deactivation_requested: false })
+    .eq("id", user.id);
 
-    if (error) {
-      setError("Failed to deactivate user. " + error.message);
-    } else {
-      fetchUsers();
-    }
+  if (error) {
+    setError("Failed to reject request. " + error.message);
+  } else {
+    fetchUsers();
   }
-
+}
   return (
     <div className="w-full">
       <h1 className="text-2xl font-bold mb-4">Users & Roles</h1>
@@ -271,13 +287,21 @@ function Users() {
                       Edit
                     </button>
                     {u.deactivationRequested && (
-                      <button
-                        onClick={() => handleApproveDeactivation(u)}
-                        className="text-red-400 font-semibold"
-                      >
-                        Approve Deactivation
-                      </button>
-                    )}
+  <>
+    <button
+      onClick={() => handleApproveDeactivation(u)}
+      className="text-red-400 font-semibold mr-3"
+    >
+      Approve
+    </button>
+    <button
+      onClick={() => handleRejectDeactivation(u)}
+      className="text-accentTeal font-semibold"
+    >
+      Reject
+    </button>
+  </>
+)}
                   </td>
                 </tr>
               ))}
