@@ -1,8 +1,11 @@
 import { useState, useEffect } from "react";
 import { ChevronDown, AlertTriangle } from "lucide-react";
+import { useAuth } from "../context/AuthContext";
 import { supabase } from "../supabaseClient";
 
+
 function RiskApproval() {
+  const { profile } = useAuth();
   const [missions, setMissions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -103,7 +106,7 @@ function RiskApproval() {
     if (isBlocked || isLocked) return;
     setSaving(true);
 
-    const decidedBy = "Zarnab A. (Administrator)";
+    const decidedBy = profile?.full-name || "Administrator";
 
     const { error } = await supabase
       .from("missions")
@@ -127,7 +130,7 @@ function RiskApproval() {
     if (isLocked || !remark.trim()) return;
     setSaving(true);
 
-    const decidedBy = "Zarnab A. (Administrator)";
+    const decidedBy = profile?.full-name || "Administrator";
 
     const { error } = await supabase
       .from("missions")

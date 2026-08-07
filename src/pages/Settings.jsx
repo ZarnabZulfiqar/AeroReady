@@ -97,11 +97,15 @@ function Settings() {
         date: m.decided_at,
       }));
     } else if (role === "Technician") {
-      const { data } = await supabase
-        .from("maintenance_records")
-        .select("maintenance_id, asset_id, inspection_outcome, next_due_date")
-        .eq("technician_id", fullName)
-        .order("next_due_date", { ascending: false });
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const { data } = await supabase
+    .from("maintenance_records")
+    .select("maintenance_id, asset_id, inspection_outcome, next_due_date")
+    .eq("technician_id", user.id)
+    .order("next_due_date", { ascending: false });
       rows = (data || []).map((m) => ({
         id: m.maintenance_id,
         label: `Resolved issue on ${m.asset_id}`,

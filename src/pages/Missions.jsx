@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Pencil, Trash2, X, ClipboardCheck } from "lucide-react";
 import { supabase } from "../supabaseClient";
 import { SkeletonCards, SkeletonTable } from "../components/Skeleton";
+import { useAuth } from "../context/AuthContext";
 
 // FR-016 / BR-003: minimum safe charge threshold — constant for now,
 // move to Settings/config table once Administrator needs to adjust it.
@@ -12,6 +13,7 @@ const CYCLE_THRESHOLD = 150;
 function Missions() {
   const navigate = useNavigate();
 
+const {profile} = useAuth();
   const [missions, setMissions] = useState([]);
   const [drones, setDrones] = useState([]);
   const [batteries, setBatteries] = useState([]);
@@ -280,9 +282,9 @@ function Missions() {
               </button>
             </>
           ) : (
-            <button onClick={() => { setNewMission(emptyMission); setEditingId(null); setFieldErrors({}); setShowForm(true); }} className="btn-primary">
-              + Add Mission
-            </button>
+            <button onClick={() => { setNewMission({ ...emptyMission, pilot: profile?.full_name || "" }); setEditingId(null); setFieldErrors({}); setShowForm(true); }} className="btn-primary">
+  + Add Mission
+</button>
           )}
         </div>
       </div>
@@ -443,11 +445,13 @@ function Missions() {
                 )}
               </div>
               <div>
-                <label className="text-textBody text-sm">Pilot / Operator</label>
-                <input placeholder="e.g. Zain Ahmed" value={newMission.pilot}
-                  onChange={(e) => setNewMission({ ...newMission, pilot: e.target.value })}
-                  className="w-full mt-1 p-2 rounded bg-bgDark border border-gray-700 text-white outline-none focus:border-accentTeal" />
-              </div>
+  <label className="text-textBody text-sm">Pilot / Operator</label>
+  <input
+    value={profile?.full_name || newMission.pilot}
+    disabled
+    className="w-full mt-1 p-2 rounded bg-bgDark border border-gray-700 text-white opacity-60 cursor-not-allowed"
+  />
+</div>
               <div>
                 <label className="text-textBody text-sm">Location</label>
                 <input placeholder="e.g. Lahore, PK" value={newMission.location}

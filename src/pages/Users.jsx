@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Search } from "lucide-react";
+import { Search, Eye, EyeOff } from "lucide-react";
 import { supabase } from "../supabaseClient";
 import { SkeletonTable } from "../components/Skeleton";
 
@@ -17,6 +17,7 @@ function Users() {
 
   const emptyUser = { name: "", email: "", phone: "", password: "", role: "Operator", status: "Active" };
   const [newUser, setNewUser] = useState(emptyUser);
+  const [showPassword, setShowPassword] = useState(false);
 
   function mapFromDb(row) {
     return {
@@ -304,16 +305,25 @@ function Users() {
             </h2>
 
             <div>
-              <label className="text-textBody text-sm">Name</label>
-              <input
-                placeholder="e.g. Zarnab Ahmed"
-                value={newUser.name}
-                onChange={(e) => setNewUser({ ...newUser, name: e.target.value })}
-                className="w-full mt-1 p-2 rounded bg-bgDark border border-gray-700 text-white outline-none focus:border-accentTeal"
-              />
-              {fieldErrors.name && <p className="text-red-400 text-xs mt-1">{fieldErrors.name}</p>}
-            </div>
-
+  <label className="text-textBody text-sm">Password</label>
+  <div className="relative">
+    <input
+      type={showPassword ? "text" : "password"}
+      placeholder="Set a password for this user"
+      value={newUser.password}
+      onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
+      className="w-full mt-1 p-2 pr-10 rounded bg-bgDark border border-gray-700 text-white outline-none focus:border-accentTeal"
+    />
+    <button
+      type="button"
+      onClick={() => setShowPassword((v) => !v)}
+      className="absolute right-3 top-1/2 -translate-y-1/2 mt-0.5 text-textBody hover:text-white"
+    >
+      {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+    </button>
+  </div>
+  {fieldErrors.password && <p className="text-red-400 text-xs mt-1">{fieldErrors.password}</p>}
+</div>
             <div>
               <label className="text-textBody text-sm">Email</label>
               <input

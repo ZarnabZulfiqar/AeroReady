@@ -20,7 +20,7 @@ function Drones() {
   const [selectMode, setSelectMode] = useState(false);
   const longPressTimer = useRef(null);
 
-  const emptyDrone = { id: "", model: "", type: "", payload: "", status: "Available", active: true };
+  const emptyDrone = { id: "", model: "", type: "Quadcopter", payload: "", status: "Available", active: true };
   const [newDrone, setNewDrone] = useState(emptyDrone);
 
   const filters = ["All", "Available", "In Mission", "Maintenance", "Damaged"];
