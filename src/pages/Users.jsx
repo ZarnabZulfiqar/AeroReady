@@ -4,6 +4,7 @@ import { supabase } from "../supabaseClient";
 import { SkeletonTable } from "../components/Skeleton";
 
 function Users() {
+  const [openDeactivationMenu, setOpenDeactivationMenu] = useState(null);
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -264,47 +265,63 @@ function Users() {
             </thead>
             <tbody>
               {filteredUsers.map((u) => (
-                <tr key={u.id} className="border-t border-gray-700">
-                  <td className="py-3 pr-4 font-semibold">{u.name}</td>
-                  <td className="py-3 pr-4 text-textBody">{u.email}</td>
-                  <td className="py-3 pr-4 text-textBody">{u.phone || "—"}</td>
-                  <td className="py-3 pr-4">{u.role}</td>
-                  <td className="py-3 pr-4">
-                    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${statusColor(u.status)}`}>
-                      {u.status}
-                    </span>
-                    {u.deactivationRequested && (
-                      <span className="ml-2 px-2 py-1 rounded-full text-xs font-semibold bg-red-500/20 text-red-400">
-                        Deactivation Requested
-                      </span>
-                    )}
-                  </td>
-                  <td className="py-3 pr-4 text-textBody text-xs">
-                    {u.createdAt ? new Date(u.createdAt).toLocaleString() : "—"}
-                  </td>
-                  <td className="py-3 text-right whitespace-nowrap">
-                    <button onClick={() => handleEdit(u)} className="text-accentTeal font-semibold mr-3">
-                      Edit
-                    </button>
-                    {u.deactivationRequested && (
-  <>
-    <button
-      onClick={() => handleApproveDeactivation(u)}
-      className="text-red-400 font-semibold mr-3"
-    >
-      Approve
-    </button>
-    <button
-      onClick={() => handleRejectDeactivation(u)}
-      className="text-accentTeal font-semibold"
-    >
-      Reject
-    </button>
-  </>
-)}
-                  </td>
-                </tr>
-              ))}
+  <tr key={u.id} className="border-t border-gray-700">
+    <td className="py-3 pr-4 font-semibold">{u.name}</td>
+    <td className="py-3 pr-4 text-textBody">{u.email}</td>
+    <td className="py-3 pr-4 text-textBody">{u.phone || "—"}</td>
+    <td className="py-3 pr-4">{u.role}</td>
+    <td className="py-3 pr-4 relative">
+      <span className={`px-3 py-1 rounded-full text-xs font-semibold ${statusColor(u.status)}`}>
+        {u.status}
+      </span>
+      {u.deactivationRequested && (
+        <>
+          <button
+            type="button"
+            onClick={() =>
+              setOpenDeactivationMenu((prev) => (prev === u.id ? null : u.id))
+            }
+            className="ml-2 px-2 py-1 rounded-full text-xs font-semibold bg-red-500/20 text-red-400 hover:bg-red-500/30"
+          >
+            Deactivation Requested
+          </button>
+          {openDeactivationMenu === u.id && (
+            <div className="absolute z-10 mt-1 bg-cardDark border border-gray-700 rounded-lg overflow-hidden shadow-lg">
+              <button
+                type="button"
+                onClick={() => {
+                  handleApproveDeactivation(u);
+                  setOpenDeactivationMenu(null);
+                }}
+                className="block w-full text-left px-4 py-2 text-xs font-semibold text-red-400 hover:bg-bgDark"
+              >
+                Approve Request
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  handleRejectDeactivation(u);
+                  setOpenDeactivationMenu(null);
+                }}
+                className="block w-full text-left px-4 py-2 text-xs font-semibold text-accentTeal hover:bg-bgDark"
+              >
+                Reject Request
+              </button>
+            </div>
+          )}
+        </>
+      )}
+    </td>
+    <td className="py-3 pr-4 text-textBody text-xs">
+      {u.createdAt ? new Date(u.createdAt).toLocaleString() : "—"}
+    </td>
+    <td className="py-3 text-right whitespace-nowrap">
+      <button onClick={() => handleEdit(u)} className="text-accentTeal font-semibold">
+        Edit
+      </button>
+    </td>
+  </tr>
+))}
             </tbody>
           </table>
         )}
