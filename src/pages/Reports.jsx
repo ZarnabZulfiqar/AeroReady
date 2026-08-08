@@ -4,6 +4,7 @@ import { supabase } from "../supabaseClient";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { SkeletonTable } from "../components/Skeleton";
+import { useAuth } from "../context/AuthContext";
 
 // Columns jo report mein nahi dikhani (internal/technical fields)
 const HIDDEN_FIELDS = ["id", "created_at", "updated_at", "user_id"];
@@ -15,6 +16,9 @@ function prettyLabel(key) {
 }
 
 function Reports() {
+  const { profile } = useAuth();
+  const role = profile?.role ?? null;
+
   const [reportType, setReportType] = useState("Mission Readiness Report");
   const [dateRange, setDateRange] = useState("");
   const [mission, setMission] = useState("");
@@ -251,79 +255,85 @@ function Reports() {
     }
   }
 
+  const canGenerate = role !== "Viewer";
+
   return (
     <div className="w-full">
-      <h1 className="text-2xl font-bold mb-4">Generate Report</h1>
+      <h1 className="text-2xl font-bold mb-4">
+        {canGenerate ? "Generate Report" : "Reports"}
+      </h1>
 
-      <form
-        onSubmit={handleGenerate}
-        className="bg-cardDark p-6 rounded-xl mb-6 grid grid-cols-1 md:grid-cols-2 gap-4"
-      >
-        <div>
-          <label className="text-textBody text-sm">Report type</label>
-          <select
-            value={reportType}
-            onChange={(e) => setReportType(e.target.value)}
-            className="w-full mt-1 p-2 rounded bg-bgDark border border-gray-700 text-white outline-none focus:border-accentTeal"
-          >
-            <option>Mission Readiness Report</option>
-            <option>Fleet Battery Health</option>
-            <option>Maintenance Summary</option>
-            <option>Compliance Audit</option>
-          </select>
-        </div>
+      {canGenerate && (
+        <form
+          onSubmit={handleGenerate}
+          className="bg-cardDark p-6 rounded-xl mb-6 grid grid-cols-1 md:grid-cols-2 gap-4"
+        >
+          <div>
+            <label className="text-textBody text-sm">Report type</label>
+            <select
+              value={reportType}
+              onChange={(e) => setReportType(e.target.value)}
+              className="w-full mt-1 p-2 rounded bg-bgDark border border-gray-700 text-white outline-none focus:border-accentTeal"
+            >
+              <option>Mission Readiness Report</option>
+              <option>Fleet Battery Health</option>
+              <option>Maintenance Summary</option>
+              <option>Compliance Audit</option>
+            </select>
+          </div>
 
-        <div>
-          <label className="text-textBody text-sm">Date range</label>
-          <input
-            type="text"
-            placeholder="Select date range..."
-            value={dateRange}
-            onChange={(e) => setDateRange(e.target.value)}
-            className="w-full mt-1 p-2 rounded bg-bgDark border border-gray-700 text-white outline-none focus:border-accentTeal"
-          />
-        </div>
+          <div>
+            <label className="text-textBody text-sm">Date range</label>
+            <input
+              type="text"
+              placeholder="Select date range..."
+              value={dateRange}
+              onChange={(e) => setDateRange(e.target.value)}
+              className="w-full mt-1 p-2 rounded bg-bgDark border border-gray-700 text-white outline-none focus:border-accentTeal"
+            />
+          </div>
 
-        <div>
-          <label className="text-textBody text-sm">Mission</label>
-          <select
-            value={mission}
-            onChange={(e) => setMission(e.target.value)}
-            className="w-full mt-1 p-2 rounded bg-bgDark border border-gray-700 text-white outline-none focus:border-accentTeal"
-          >
-            <option value="">Select mission...</option>
-            {missionOptions.map((m) => (
-              <option key={m.id} value={m.id}>{m.name}</option>
-            ))}
-          </select>
-          {fieldErrors.mission && <p className="text-red-400 text-xs mt-1">{fieldErrors.mission}</p>}
-        </div>
+          <div>
+            <label className="text-textBody text-sm">Mission</label>
+            <select
+              value={mission}
+              onChange={(e) => setMission(e.target.value)}
+              className="w-full mt-1 p-2 rounded bg-bgDark border border-gray-700 text-white outline-none focus:border-accentTeal"
+            >
+              <option value="">Select mission...</option>
+              {missionOptions.map((m) => (
+                <option key={m.id} value={m.id}>{m.name}</option>
+              ))}
+            </select>
+            {fieldErrors.mission && <p className="text-red-400 text-xs mt-1">{fieldErrors.mission}</p>}
+          </div>
 
-        <div>
-          <label className="text-textBody text-sm">Export format</label>
-          <select
-            value={exportFormat}
-            onChange={(e) => setExportFormat(e.target.value)}
-            className="w-full mt-1 p-2 rounded bg-bgDark border border-gray-700 text-white outline-none focus:border-accentTeal"
-          >
-            <option value="">PDF / Printable view / CSV</option>
-            <option>PDF</option>
-            <option>Printable view</option>
-            <option>CSV</option>
-          </select>
-          {fieldErrors.exportFormat && <p className="text-red-400 text-xs mt-1">{fieldErrors.exportFormat}</p>}
-        </div>
+          <div>
+            <label className="text-textBody text-sm">Export format</label>
+            <select
+              value={exportFormat}
+              onChange={(e) => setExportFormat(e.target.value)}
+              className="w-full mt-1 p-2 rounded bg-bgDark border border-gray-700 text-white outline-none focus:border-accentTeal"
+            >
+              <option value="">PDF / Printable view / CSV</option>
+              <option>PDF</option>
+              <option>Printable view</option>
+              <option>CSV</option>
+            </select>
+            {fieldErrors.exportFormat && <p className="text-red-400 text-xs mt-1">{fieldErrors.exportFormat}</p>}
+          </div>
 
-        {fieldErrors.form && (
-          <p className="md:col-span-2 text-red-400 text-sm">{fieldErrors.form}</p>
-        )}
+          {fieldErrors.form && (
+            <p className="md:col-span-2 text-red-400 text-sm">{fieldErrors.form}</p>
+          )}
 
-        <div className="md:col-span-2">
-          <button type="submit" disabled={generating} className="btn-primary disabled:opacity-50">
-            {generating ? "Generating..." : "Generate Report"}
-          </button>
-        </div>
-      </form>
+          <div className="md:col-span-2">
+            <button type="submit" disabled={generating} className="btn-primary disabled:opacity-50">
+              {generating ? "Generating..." : "Generate Report"}
+            </button>
+          </div>
+        </form>
+      )}
 
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-3 gap-3">
         <h2 className="text-lg font-bold">Generated Reports</h2>
@@ -401,14 +411,16 @@ function Reports() {
                     >
                       <Download size={14} /> Download
                     </button>
-                    <button
-                      onClick={() => toggleArchive(r.id)}
-                      className={`font-semibold ${
-                        r.status === "Active" ? "text-textBody hover:text-red-400" : "text-accentTeal"
-                      }`}
-                    >
-                      {r.status === "Active" ? "Archive" : "Unarchive"}
-                    </button>
+                    {canGenerate && (
+                      <button
+                        onClick={() => toggleArchive(r.id)}
+                        className={`font-semibold ${
+                          r.status === "Active" ? "text-textBody hover:text-red-400" : "text-accentTeal"
+                        }`}
+                      >
+                        {r.status === "Active" ? "Archive" : "Unarchive"}
+                      </button>
+                    )}
                   </td>
                 </tr>
               ))}
