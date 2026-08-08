@@ -19,6 +19,7 @@ function RiskApproval() {
     return {
       id: row.id,
       name: row.name,
+      droneId: row.drone_id,
       submittedBy: row.pilot || "",
       checklistStatus: "Checklist completed",
       riskScore: row.risk_score ?? 0,
@@ -106,7 +107,7 @@ function RiskApproval() {
     if (isBlocked || isLocked) return;
     setSaving(true);
 
-    const decidedBy = profile?.full-name || "Administrator";
+    const decidedBy = profile?.full_name || "Administrator";
 
     const { error } = await supabase
       .from("missions")
@@ -121,6 +122,15 @@ function RiskApproval() {
     if (error) {
       setError("Failed to save decision. " + error.message);
     } else {
+      const { error: droneError } = await supabase
+        .from("drones")
+        .update({ status: "In Mission" })
+        .eq("drone_id", mission.droneId);
+
+      if (droneError) {
+        setError("Mission approved, but failed to update drone status. " + droneError.message);
+      }
+
       fetchMissions();
     }
     setSaving(false);
@@ -130,7 +140,7 @@ function RiskApproval() {
     if (isLocked || !remark.trim()) return;
     setSaving(true);
 
-    const decidedBy = profile?.full-name || "Administrator";
+    const decidedBy = profile?.full_name || "Administrator";
 
     const { error } = await supabase
       .from("missions")
