@@ -346,25 +346,17 @@ function Users() {
             </h2>
 
             <div>
-  <label className="text-textBody text-sm">Password</label>
-  <div className="relative">
-    <input
-      type={showPassword ? "text" : "password"}
-      placeholder="Set a password for this user"
-      value={newUser.password}
-      onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
-      className="w-full mt-1 p-2 pr-10 rounded bg-bgDark border border-gray-700 text-white outline-none focus:border-accentTeal"
-    />
-    <button
-      type="button"
-      onClick={() => setShowPassword((v) => !v)}
-      className="absolute right-3 top-1/2 -translate-y-1/2 mt-0.5 text-textBody hover:text-white"
-    >
-      {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-    </button>
-  </div>
-  {fieldErrors.password && <p className="text-red-400 text-xs mt-1">{fieldErrors.password}</p>}
-</div>
+              <label className="text-textBody text-sm">Name</label>
+              <input
+                type="text"
+                placeholder="e.g. Zarnab Zulfiqar"
+                value={newUser.name}
+                onChange={(e) => setNewUser({ ...newUser, name: e.target.value })}
+                className="w-full mt-1 p-2 rounded bg-bgDark border border-gray-700 text-white outline-none focus:border-accentTeal"
+              />
+              {fieldErrors.name && <p className="text-red-400 text-xs mt-1">{fieldErrors.name}</p>}
+            </div>
+
             <div>
               <label className="text-textBody text-sm">Email</label>
               <input
@@ -393,13 +385,22 @@ function Users() {
             {!editingId && (
               <div>
                 <label className="text-textBody text-sm">Password</label>
-                <input
-                  type="password"
-                  placeholder="Set a password for this user"
-                  value={newUser.password}
-                  onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
-                  className="w-full mt-1 p-2 rounded bg-bgDark border border-gray-700 text-white outline-none focus:border-accentTeal"
-                />
+                <div className="relative">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Set a password for this user"
+                    value={newUser.password}
+                    onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
+                    className="w-full mt-1 p-2 pr-10 rounded bg-bgDark border border-gray-700 text-white outline-none focus:border-accentTeal"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((v) => !v)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 mt-0.5 text-textBody hover:text-white"
+                  >
+                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
                 {fieldErrors.password && <p className="text-red-400 text-xs mt-1">{fieldErrors.password}</p>}
               </div>
             )}
