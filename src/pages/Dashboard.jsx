@@ -2,11 +2,15 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../supabaseClient";
 import { SkeletonCards, SkeletonTable } from "../components/Skeleton";
+import { useAuth } from "../context/AuthContext";
 
 const CYCLE_THRESHOLD = 150;
 
 function Dashboard() {
   const navigate = useNavigate();
+  const { profile } = useAuth();
+  const role = profile?.role ?? null;
+
   const [missions, setMissions] = useState([]);
   const [approvals, setApprovals] = useState([]);
   const [stats, setStats] = useState({
@@ -98,7 +102,8 @@ function Dashboard() {
     s === "Draft" ? "text-gray-400" :
     "text-orange-400";
 
-  // Har card ka apna target route
+  // Har card ka apna target route + wahi roles jo Sidebar.jsx mein us route
+  // ke liye defined hain (consistent access-control rakhne ke liye).
   const statCards = [
     {
       key: "drones",
@@ -106,6 +111,7 @@ function Dashboard() {
       value: stats.activeDrones,
       sub: `${stats.groundedDrones} grounded`,
       path: "/drones",
+      roles: ["Administrator"],
     },
     {
       key: "batteries",
@@ -113,6 +119,7 @@ function Dashboard() {
       value: stats.batteriesToInspect,
       sub: `${stats.criticalBatteries} critical`,
       path: "/batteries",
+      roles: ["Administrator", "Technician"],
     },
     {
       key: "missions",
@@ -120,6 +127,7 @@ function Dashboard() {
       value: stats.upcomingMissions,
       sub: stats.nextMissionDate ? `Next: ${stats.nextMissionDate}` : "No upcoming missions",
       path: "/missions",
+      roles: ["Operator"],
     },
     {
       key: "maintenance",
@@ -127,6 +135,7 @@ function Dashboard() {
       value: stats.openMaintenance,
       sub: `${stats.unresolvedCritical} unresolved critical`,
       path: "/maintenance",
+      roles: ["Operator", "Technician"],
     },
     {
       key: "approvals",
@@ -134,8 +143,12 @@ function Dashboard() {
       value: stats.pendingApprovals,
       sub: `${stats.highRiskApprovals} high-risk`,
       path: "/risk-approval",
+      roles: ["Administrator", "Operator"],
     },
   ];
+
+  // Sidebar.jsx ki tarah: roles undefined = sab dekh/ja sakte hain
+  const canNavigate = (card) => !card.roles || card.roles.includes(role);
 
   return (
     <div className="w-full">
@@ -160,17 +173,26 @@ function Dashboard() {
 ) : (
         <>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
-            {statCards.map((card) => (
-              <button
-                key={card.key}
-                onClick={() => navigate(card.path)}
-                className="bg-cardDark p-4 rounded text-left w-full hover:border hover:border-accentTeal transition-colors cursor-pointer"
-              >
-                <p className="text-textBody text-sm">{card.label}</p>
-                <p className="text-2xl font-bold text-accentTeal">{card.value}</p>
-                <p className="text-textBody text-xs mt-1">{card.sub}</p>
-              </button>
-            ))}
+            {statCards.map((card) => {
+              const allowed = canNavigate(card);
+              return (
+                <button
+                  key={card.key}
+                  type="button"
+                  onClick={() => allowed && navigate(card.path)}
+                  disabled={!allowed}
+                  className={`bg-cardDark p-4 rounded text-left w-full transition-colors ${
+                    allowed
+                      ? "hover:border hover:border-accentTeal cursor-pointer"
+                      : "cursor-default opacity-80"
+                  }`}
+                >
+                  <p className="text-textBody text-sm">{card.label}</p>
+                  <p className="text-2xl font-bold text-accentTeal">{card.value}</p>
+                  <p className="text-textBody text-xs mt-1">{card.sub}</p>
+                </button>
+              );
+            })}
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
