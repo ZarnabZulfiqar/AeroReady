@@ -34,7 +34,7 @@ const {profile} = useAuth();
 
   const emptyMission = {
     id: "", name: "", droneId: "", batteryId: "", pilot: "",
-    location: "", date: "", duration: "", payloadRequired: false, status: "Draft",
+    location: "", date: "", duration: "", payloadRequired: false, status: "Draft", decision: null,
   };
   const [newMission, setNewMission] = useState(emptyMission);
 
@@ -66,6 +66,7 @@ const {profile} = useAuth();
       duration: row.duration_minutes ?? "",
       payloadRequired: row.payload_required,
       status: row.status,
+      decision: row.decision || null,
     };
   }
 
@@ -261,6 +262,20 @@ const {profile} = useAuth();
     } else {
       setSelected(deletableIds);
     }
+  }
+
+  // Decides which Status options should be selectable in the Edit form,
+  // based on whether a Risk Approval decision has already been recorded.
+  // Pending Approval / Approved / Rejected are set automatically by the
+  // checklist-submit and Risk Approval flows — never manually here.
+  function availableStatusOptions() {
+    if (newMission.decision === "approved") {
+      return ["Approved", "Completed"];
+    }
+    if (newMission.decision === "rejected") {
+      return ["Rejected"];
+    }
+    return ["Draft", "Pending Checklist"];
   }
 
   return (
@@ -466,20 +481,35 @@ const {profile} = useAuth();
                 {fieldErrors.date && <p className="text-red-400 text-xs mt-1">{fieldErrors.date}</p>}
               </div>
               <div>
-                <label className="text-textBody text-sm">Expected Duration (minutes)</label>
+               <label className="text-textBody text-sm">Expected Duration (minutes)</label>
                 <input type="number" placeholder="e.g. 45" value={newMission.duration}
                   onChange={(e) => setNewMission({ ...newMission, duration: e.target.value })}
                   className="w-full mt-1 p-2 rounded bg-bgDark border border-gray-700 text-white outline-none focus:border-accentTeal" />
               </div>
               <div>
                 <label className="text-textBody text-sm">Status</label>
-                <select value={newMission.status}
+                <select
+                  value={newMission.status}
+                  disabled={newMission.decision === "rejected"}
                   onChange={(e) => setNewMission({ ...newMission, status: e.target.value })}
-                  className="w-full mt-1 p-2 rounded bg-bgDark border border-gray-700 text-white outline-none focus:border-accentTeal">
-                  {statuses.map((s) => <option key={s}>{s}</option>)}
+                  className="w-full mt-1 p-2 rounded bg-bgDark border border-gray-700 text-white outline-none focus:border-accentTeal disabled:opacity-50"
+                >
+                  {availableStatusOptions().map((s) => (
+                    <option key={s} value={s}>{s}</option>
+                  ))}
                 </select>
+                {newMission.decision === "approved" && (
+                  <p className="text-textBody text-xs mt-1">
+                    This mission has been approved — it can only be marked Completed.
+                  </p>
+                )}
+                {newMission.decision === "rejected" && (
+                  <p className="text-textBody text-xs mt-1">
+                    This mission was rejected — status is locked.
+                  </p>
+                )}
               </div>
-              <div className="flex items-center gap-2 mt-6">
+              <div className="flex items-center gap-2 sm:col-span-2">
                 <input
                   type="checkbox"
                   id="payloadRequired"
@@ -488,7 +518,7 @@ const {profile} = useAuth();
                   className="accent-accentTeal"
                 />
                 <label htmlFor="payloadRequired" className="text-textBody text-sm">
-                  Payload / camera required for this mission
+                  Payload / Camera required for this mission
                 </label>
               </div>
             </div>
@@ -520,7 +550,7 @@ const {profile} = useAuth();
                 : `Delete ${selected.length} missions?`}
             </h2>
             <p className="text-textBody text-sm mb-6">
-              This will permanently remove the Draft mission record. This action cannot be undone.
+              This action cannot be undone. Only Draft missions can be deleted.
             </p>
             <div className="flex flex-col sm:flex-row gap-2">
               <button
@@ -544,4 +574,3 @@ const {profile} = useAuth();
 }
 
 export default Missions;
-              
