@@ -111,39 +111,38 @@ function Users() {
 
     setSaving(true);
 
- if (editingId) {
-  const { error } = await supabase
-    .from("profiles")
-    .update({
-      full_name: newUser.name,
-      phone: newUser.phone,
-      role: newUser.role,
-      status: newUser.status,
-    })
-    .eq("id", editingId);
+    if (editingId) {
+      const { error } = await supabase
+        .from("profiles")
+        .update({
+          full_name: newUser.name,
+          phone: newUser.phone,
+          role: newUser.role,
+          status: newUser.status,
+        })
+        .eq("id", editingId);
 
-  if (error) {
-    setFieldErrors({ form: "Failed to save changes. " + error.message });
-    setSaving(false);
-    return;
-  }
+      if (error) {
+        setFieldErrors({ form: "Failed to save changes. " + error.message });
+        setSaving(false);
+        return;
+      }
 
-  if (newUser.password) {
-    const { data: sessionData } = await supabase.auth.getSession();
-    const { data, error: pwError } = await supabase.functions.invoke("admin-update-password", {
-      body: { userId: editingId, newPassword: newUser.password },
-      headers: {
-        Authorization: `Bearer ${sessionData?.session?.access_token || ""}`,
-      },
-    });
+      if (newUser.password) {
+        const { data: sessionData } = await supabase.auth.getSession();
+        const { data, error: pwError } = await supabase.functions.invoke("admin-update-password", {
+          body: { userId: editingId, newPassword: newUser.password },
+          headers: {
+            Authorization: `Bearer ${sessionData?.session?.access_token || ""}`,
+          },
+        });
 
-    if (pwError || data?.error) {
-      setFieldErrors({ form: "Profile saved, but password change failed. " + (data?.error || pwError.message) });
-      setSaving(false);
-      return;
-    }
-  }
-
+        if (pwError || data?.error) {
+          setFieldErrors({ form: "Profile saved, but password change failed. " + (data?.error || pwError.message) });
+          setSaving(false);
+          return;
+        }
+      }
     } else {
       const { data: sessionData } = await supabase.auth.getSession();
       const { data, error } = await supabase.functions.invoke("create-user", {
@@ -180,20 +179,36 @@ function Users() {
     setShowForm(true);
   }
 
- async function handleRejectDeactivation(user) {
-  if (!window.confirm(`Reject ${user.name}'s deactivation request? Account will remain Active.`)) return;
+  async function handleApproveDeactivation(user) {
+    if (!window.confirm(`Deactivate ${user.name}'s account?`)) return;
 
-  const { error } = await supabase
-    .from("profiles")
-    .update({ deactivation_requested: false })
-    .eq("id", user.id);
+    const { error } = await supabase
+      .from("profiles")
+      .update({ status: "Deactivated", deactivation_requested: false })
+      .eq("id", user.id);
 
-  if (error) {
-    setError("Failed to reject request. " + error.message);
-  } else {
-    fetchUsers();
+    if (error) {
+      setError("Failed to deactivate user. " + error.message);
+    } else {
+      fetchUsers();
+    }
   }
-}
+
+  async function handleRejectDeactivation(user) {
+    if (!window.confirm(`Reject ${user.name}'s deactivation request? Account will remain Active.`)) return;
+
+    const { error } = await supabase
+      .from("profiles")
+      .update({ deactivation_requested: false })
+      .eq("id", user.id);
+
+    if (error) {
+      setError("Failed to reject request. " + error.message);
+    } else {
+      fetchUsers();
+    }
+  }
+
   return (
     <div className="w-full">
       <h1 className="text-2xl font-bold mb-4">Users & Roles</h1>
@@ -247,8 +262,8 @@ function Users() {
 
       <div className="bg-cardDark p-4 rounded overflow-x-auto">
         {loading ? (
-  <SkeletonTable rows={5} columns={7} />
-) : filteredUsers.length === 0 ? (
+          <SkeletonTable rows={5} columns={7} />
+        ) : filteredUsers.length === 0 ? (
           <p className="text-textBody text-center py-8">No Users Found</p>
         ) : (
           <table className="w-full text-sm">
@@ -265,63 +280,63 @@ function Users() {
             </thead>
             <tbody>
               {filteredUsers.map((u) => (
-  <tr key={u.id} className="border-t border-gray-700">
-    <td className="py-3 pr-4 font-semibold">{u.name}</td>
-    <td className="py-3 pr-4 text-textBody">{u.email}</td>
-    <td className="py-3 pr-4 text-textBody">{u.phone || "—"}</td>
-    <td className="py-3 pr-4">{u.role}</td>
-    <td className="py-3 pr-4 relative">
-      <span className={`px-3 py-1 rounded-full text-xs font-semibold ${statusColor(u.status)}`}>
-        {u.status}
-      </span>
-      {u.deactivationRequested && (
-        <>
-          <button
-            type="button"
-            onClick={() =>
-              setOpenDeactivationMenu((prev) => (prev === u.id ? null : u.id))
-            }
-            className="ml-2 px-2 py-1 rounded-full text-xs font-semibold bg-red-500/20 text-red-400 hover:bg-red-500/30"
-          >
-            Deactivation Requested
-          </button>
-          {openDeactivationMenu === u.id && (
-            <div className="absolute z-10 mt-1 bg-cardDark border border-gray-700 rounded-lg overflow-hidden shadow-lg">
-              <button
-                type="button"
-                onClick={() => {
-                  handleApproveDeactivation(u);
-                  setOpenDeactivationMenu(null);
-                }}
-                className="block w-full text-left px-4 py-2 text-xs font-semibold text-red-400 hover:bg-bgDark"
-              >
-                Approve Request
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  handleRejectDeactivation(u);
-                  setOpenDeactivationMenu(null);
-                }}
-                className="block w-full text-left px-4 py-2 text-xs font-semibold text-accentTeal hover:bg-bgDark"
-              >
-                Reject Request
-              </button>
-            </div>
-          )}
-        </>
-      )}
-    </td>
-    <td className="py-3 pr-4 text-textBody text-xs">
-      {u.createdAt ? new Date(u.createdAt).toLocaleString() : "—"}
-    </td>
-    <td className="py-3 text-right whitespace-nowrap">
-      <button onClick={() => handleEdit(u)} className="text-accentTeal font-semibold">
-        Edit
-      </button>
-    </td>
-  </tr>
-))}
+                <tr key={u.id} className="border-t border-gray-700">
+                  <td className="py-3 pr-4 font-semibold">{u.name}</td>
+                  <td className="py-3 pr-4 text-textBody">{u.email}</td>
+                  <td className="py-3 pr-4 text-textBody">{u.phone || "—"}</td>
+                  <td className="py-3 pr-4">{u.role}</td>
+                  <td className="py-3 pr-4 relative">
+                    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${statusColor(u.status)}`}>
+                      {u.status}
+                    </span>
+                    {u.deactivationRequested && (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setOpenDeactivationMenu((prev) => (prev === u.id ? null : u.id))
+                          }
+                          className="ml-2 px-2 py-1 rounded-full text-xs font-semibold bg-red-500/20 text-red-400 hover:bg-red-500/30"
+                        >
+                          Deactivation Requested
+                        </button>
+                        {openDeactivationMenu === u.id && (
+                          <div className="absolute z-10 mt-1 bg-cardDark border border-gray-700 rounded-lg overflow-hidden shadow-lg">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                handleApproveDeactivation(u);
+                                setOpenDeactivationMenu(null);
+                              }}
+                              className="block w-full text-left px-4 py-2 text-xs font-semibold text-red-400 hover:bg-bgDark"
+                            >
+                              Approve Request
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                handleRejectDeactivation(u);
+                                setOpenDeactivationMenu(null);
+                              }}
+                              className="block w-full text-left px-4 py-2 text-xs font-semibold text-accentTeal hover:bg-bgDark"
+                            >
+                              Reject Request
+                            </button>
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </td>
+                  <td className="py-3 pr-4 text-textBody text-xs">
+                    {u.createdAt ? new Date(u.createdAt).toLocaleString() : "—"}
+                  </td>
+                  <td className="py-3 text-right whitespace-nowrap">
+                    <button onClick={() => handleEdit(u)} className="text-accentTeal font-semibold">
+                      Edit
+                    </button>
+                  </td>
+                </tr>
+              ))}
             </tbody>
           </table>
         )}
@@ -382,28 +397,28 @@ function Users() {
               {fieldErrors.phone && <p className="text-red-400 text-xs mt-1">{fieldErrors.phone}</p>}
             </div>
 
-            {!editingId && (
-              <div>
-                <label className="text-textBody text-sm">Password</label>
-                <div className="relative">
-                  <input
-                    type={showPassword ? "text" : "password"}
-                    placeholder="Set a password for this user"
-                    value={newUser.password}
-                    onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
-                    className="w-full mt-1 p-2 pr-10 rounded bg-bgDark border border-gray-700 text-white outline-none focus:border-accentTeal"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword((v) => !v)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 mt-0.5 text-textBody hover:text-white"
-                  >
-                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                  </button>
-                </div>
-                {fieldErrors.password && <p className="text-red-400 text-xs mt-1">{fieldErrors.password}</p>}
+            <div>
+              <label className="text-textBody text-sm">
+                {editingId ? "New Password (leave blank to keep unchanged)" : "Password"}
+              </label>
+              <div className="relative">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  placeholder={editingId ? "Enter new password to reset" : "Set a password for this user"}
+                  value={newUser.password}
+                  onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
+                  className="w-full mt-1 p-2 pr-10 rounded bg-bgDark border border-gray-700 text-white outline-none focus:border-accentTeal"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((v) => !v)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 mt-0.5 text-textBody hover:text-white"
+                >
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
               </div>
-            )}
+              {fieldErrors.password && <p className="text-red-400 text-xs mt-1">{fieldErrors.password}</p>}
+            </div>
 
             <div>
               <label className="text-textBody text-sm">Role</label>
